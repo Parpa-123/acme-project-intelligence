@@ -42,6 +42,10 @@ services:
       - MINIO_URL=http://minio:9000
       - SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
       - SUPERTOKENS_API_KEY=Pass-12345678901234567890
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
     depends_on:
       - postgres
       - redis
@@ -103,7 +107,7 @@ services:
       - "7881:7881"
       - "7882:7882/udp"
     # Livekit requires a minimal dev config. It can be passed via command line flags for local dev.
-    command: --dev --bind 0.0.0.0 --node-ip 192.168.0.116 --redis-host redis:6379 --redis-password ""
+    command: --dev --bind 0.0.0.0 --node-ip 127.0.0.1 --redis-host redis:6379 --redis-password ""
     depends_on:
       - redis
     networks:
@@ -135,8 +139,13 @@ services:
       - PGADMIN_DEFAULT_EMAIL=admin@admin.com
       - PGADMIN_DEFAULT_PASSWORD=admin
       - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
     depends_on:
       - postgres
+      - redis
     networks:
       - app-network
 
@@ -153,6 +162,10 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg://appuser:apppassword@postgres:5432/appdb
       - REDIS_HOST=redis
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
     depends_on:
       - redis
       - postgres

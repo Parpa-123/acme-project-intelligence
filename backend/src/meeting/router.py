@@ -12,10 +12,26 @@ from .schemas import (
     MeetingSpaceDetailResponse, MeetingSpaceUpdateRequest, ActiveMeetingSummary, UserSummary,
     MeetingSessionResponse, MeetingJoinResponse, SuccessResponse
 )
+import uuid
+import io
+import wave
+import base64
+
+def pcm_to_wav_base64(raw_pcm_bytes, channels=1, sample_width=2, sample_rate=16000):
+    wav_buffer = io.BytesIO()
+    with wave.open(wav_buffer, "wb") as wav_file:
+        wav_file.setnchannels(channels)
+        wav_file.setsampwidth(sample_width)
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(raw_pcm_bytes)
+    return base64.b64encode(wav_buffer.getvalue()).decode('utf-8')
+
 from .repository import MeetingSpaceRepository
 from .service import MeetingSessionService
 from src.projects.service import ProjectService
 from src.projects.models import MemberRole
+from src.models import User
+from src.arq_client import enqueue_arq_job
 
 router = APIRouter(prefix="/projects/{project_id}/meeting-spaces", tags=["Meeting Spaces (Projects)"])
 space_router = APIRouter(prefix="/meeting-spaces", tags=["Meeting Spaces (Detail)"])
@@ -178,13 +194,35 @@ def start_meeting(
     project_service._check_project_access(space.project_id, user.id)
     session_service = MeetingSessionService(db)
     meeting = session_service.start_meeting(space_id, user.id)
-    
     return MeetingSessionResponse(
         id=meeting.id,
         meeting_space_id=meeting.meeting_space_id,
         status=meeting.status.value,
         started_at=meeting.started_at
     )
+
+@session_router.post("/{meeting_id}/start-stt", response_model=SuccessResponse)
+def start_stt(
+    meeting_id: str,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    project_service = ProjectService(db)
+    user = project_service._get_user_by_supertokens_id(session.get_user_id())
+    
+    meeting = db.query(Meeting).filter(Meeting.id == uuid.UUID(meeting_id)).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+        
+    project_service._check_project_access(meeting.meeting_space.project_id, user.id)
+    
+    # Dispatch STT Agent manually
+    enqueue_arq_job(
+        "dispatch_stt_agent", 
+        meeting.meeting_space.livekit_room_name
+    )
+    
+    return SuccessResponse(status="success", message="STT Agent dispatched.")
 
 @space_router.post("/{space_id}/join", response_model=MeetingJoinResponse)
 def join_meeting(
@@ -218,9 +256,243 @@ def leave_meeting(
     
     return SuccessResponse(status="success", message="Successfully left meeting.")
 
-from .schemas import MeetingChatMessageRequest, MeetingChatMessageResponse
-from .models import MeetingChatMessage, Meeting, MeetingChatType
-import uuid
+
+from .schemas import MeetingChatMessageRequest, MeetingChatMessageResponse, MeetingTranscriptResponse
+from .models import MeetingChatMessage, Meeting, MeetingChatType, MeetingTranscript
+from fastapi import WebSocket, WebSocketDisconnect
+import json
+import asyncio
+import redis.asyncio as aioredis
+import websockets
+from datetime import datetime, timezone
+
+
+
+
+@session_router.get("/{meeting_id}/transcript", response_model=List[MeetingTranscriptResponse])
+def get_meeting_transcripts(
+    meeting_id: str,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    project_service = ProjectService(db)
+    user = project_service._get_user_by_supertokens_id(session.get_user_id())
+    
+    meeting = db.query(Meeting).filter(Meeting.id == uuid.UUID(meeting_id)).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+        
+    project_service._check_project_access(meeting.meeting_space.project_id, user.id)
+    
+    transcripts = db.query(MeetingTranscript).filter(
+        MeetingTranscript.meeting_id == uuid.UUID(meeting_id)
+    ).order_by(MeetingTranscript.created_at.asc()).all()
+    
+    return [
+        MeetingTranscriptResponse(
+            id=t.id,
+            meeting_id=t.meeting_id,
+            user_id=t.user_id,
+            user_name=t.user.full_name or t.user.email.split('@')[0],
+            text=t.text,
+            is_final=t.is_final,
+            created_at=t.created_at
+        ) for t in transcripts
+    ]
+
+@session_router.websocket("/{meeting_id}/transcript/ws")
+async def websocket_transcript(websocket: WebSocket, meeting_id: str, db: Session = Depends(get_db)):
+    await websocket.accept()
+    
+    meeting = db.query(Meeting).filter(Meeting.id == uuid.UUID(meeting_id)).first()
+    if not meeting:
+        await websocket.close(code=1008, reason="Meeting not found")
+        return
+        
+    room_name = meeting.meeting_space.livekit_room_name
+    
+    redis_host = os.environ.get("REDIS_HOST", "redis")
+    redis_client = aioredis.Redis(host=redis_host, port=6379, db=0)
+    
+    last_id = "$"
+    
+    try:
+        while True:
+            streams = await redis_client.xread(
+                {"meeting.events": last_id}, 
+                count=10, 
+                block=1000
+            )
+            
+            if streams:
+                for stream_name, messages in streams:
+                    for message_id, message_data in messages:
+                        last_id = message_id
+                        
+                        raw_event = message_data[b"event"] if b"event" in message_data else message_data.get("event")
+                        if isinstance(raw_event, bytes):
+                            raw_event = raw_event.decode("utf-8")
+                            
+                        event_data = json.loads(raw_event)
+                        
+                        if event_data.get("meeting_id") == room_name:
+                            await websocket.send_json(event_data)
+                            
+            await asyncio.sleep(0.01)
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        print(f"Transcript WS error: {e}")
+    finally:
+        await redis_client.close()
+
+import aiohttp
+
+@session_router.websocket("/{meeting_id}/stt/ws")
+async def websocket_stt_proxy(
+    websocket: WebSocket, 
+    meeting_id: str, 
+    language: str = "en-IN", 
+    mode: str = "transcribe",
+    db: Session = Depends(get_db)
+):
+    await websocket.accept()
+    
+    meeting = db.query(Meeting).filter(Meeting.id == uuid.UUID(meeting_id)).first()
+    if not meeting:
+        await websocket.close(code=1008, reason="Meeting not found")
+        return
+        
+    room_name = meeting.meeting_space.livekit_room_name
+    sarvam_key = os.environ.get("SARVAM_API_KEY")
+    if not sarvam_key:
+        print("SARVAM_API_KEY missing")
+        await websocket.close(code=1011, reason="Server error")
+        return
+
+    # User ID extraction is skipped for simplicity in WS, assume anonymous or pass token if needed.
+    # In production, verify session token here.
+    user_name = "User"
+
+    redis_host = os.environ.get("REDIS_HOST", "redis")
+    redis_client = aioredis.Redis(host=redis_host, port=6379, db=0)
+
+    url = f"wss://api.sarvam.ai/speech-to-text/ws?language-code={language}&model=saaras%3Av3&vad_signals=true&sample_rate=16000&mode={mode}"
+    headers = {"api-subscription-key": sarvam_key}
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.ws_connect(url, headers=headers) as sarvam_ws:
+                
+                async def read_from_client():
+                    try:
+                        while True:
+                            message = await websocket.receive()
+                            if "bytes" in message:
+                                if len(message["bytes"]) == 0:
+                                    continue
+
+                                import base64
+                                base64_audio = base64.b64encode(message["bytes"]).decode("utf-8")
+                                await sarvam_ws.send_json({
+                                    "audio": {
+                                        "data": base64_audio,
+                                        "sample_rate": 16000,
+                                        "encoding": "audio/wav"
+                                    }
+                                })
+                            elif "text" in message:
+                                data = json.loads(message["text"])
+                                if data.get("action") == "close":
+                                    break
+                    except WebSocketDisconnect:
+                        pass
+                    except Exception as e:
+                        print(f"Error reading from client: {e}")
+                    finally:
+                        try:
+                            await sarvam_ws.send_json({"action": "close"})
+                        except:
+                            pass
+
+                async def read_from_sarvam():
+                    try:
+                        async for msg in sarvam_ws:
+                            if msg.type == aiohttp.WSMsgType.TEXT:
+                                data = json.loads(msg.data)
+                                
+                                if data.get("type") == "data" and "transcript" in data.get("data", {}):
+                                    transcript = data["data"]["transcript"].strip()
+                                    if transcript:
+                                        redis_event = {
+                                            "type": "USER_TRANSCRIPT",
+                                            "meeting_id": room_name,
+                                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                                            "payload": {
+                                                "speaker": "client",
+                                                "user_name": user_name,
+                                                "text": transcript,
+                                                "is_final": True
+                                            }
+                                        }
+                                        await redis_client.xadd("meeting.events", {"event": json.dumps(redis_event)})
+                                        
+                                        # Also send a speaking_stop just in case
+                                        redis_event_stop = {
+                                            "type": "USER_ACTION",
+                                            "meeting_id": room_name,
+                                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                                            "payload": {
+                                                "speaker": "client",
+                                                "action": "speaking_stop"
+                                            }
+                                        }
+                                        await redis_client.xadd("meeting.events", {"event": json.dumps(redis_event_stop)})
+                                        
+                                elif data.get("type") == "events":
+                                    signal = data.get("data", {}).get("signal_type")
+                                    if signal == "START_SPEECH":
+                                        redis_event = {
+                                            "type": "USER_ACTION",
+                                            "meeting_id": room_name,
+                                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                                            "payload": {
+                                                "speaker": "client",
+                                                "action": "speaking_start"
+                                            }
+                                        }
+                                        await redis_client.xadd("meeting.events", {"event": json.dumps(redis_event)})
+                                    elif signal == "END_SPEECH":
+                                        redis_event = {
+                                            "type": "USER_ACTION",
+                                            "meeting_id": room_name,
+                                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                                            "payload": {
+                                                "speaker": "client",
+                                                "action": "speaking_stop"
+                                            }
+                                        }
+                                        await redis_client.xadd("meeting.events", {"event": json.dumps(redis_event)})
+                                
+                                elif data.get("type") == "error":
+                                    print("❌ [STT] Sarvam Error:", data)
+                    except Exception as e:
+                        print(f"Error reading from Sarvam: {e}")
+
+                await asyncio.gather(
+                    read_from_client(),
+                    read_from_sarvam()
+                )
+    except Exception as e:
+        print(f"STT Proxy error: {e}")
+    finally:
+        await redis_client.close()
+        try:
+            await websocket.close()
+        except:
+            pass
+
+# Removed websocket_stt_streaming - replaced by LiveKit Agent
 
 @session_router.get("/{meeting_id}/messages", response_model=List[MeetingChatMessageResponse])
 def get_meeting_messages(

@@ -56,6 +56,9 @@ class MeetingSpaceRepository:
             Meeting.status == MeetingStatus.IN_PROGRESS
         ).first()
 
+    def get_meeting_by_id(self, meeting_id: uuid.UUID) -> Optional[Meeting]:
+        return self.db.query(Meeting).filter(Meeting.id == meeting_id).first()
+
     def update_meeting_space(self, space: MeetingSpace, update_data: dict) -> MeetingSpace:
         for key, value in update_data.items():
             if value is not None:

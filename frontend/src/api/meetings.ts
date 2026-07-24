@@ -84,3 +84,43 @@ export const useSendMeetingMessage = (meetingId: string | undefined) => {
       }),
   });
 };
+
+export interface TranscriptEvent {
+  type: string;
+  meeting_id: string;
+  timestamp: string;
+  payload: {
+    speaker: string;
+    user_name: string;
+    text: string;
+    is_final: boolean;
+  };
+}
+
+export interface MeetingTranscriptResponse {
+  id: string;
+  meeting_id: string;
+  user_id: number;
+  user_name: string;
+  text: string;
+  is_final: boolean;
+  created_at: string;
+}
+
+export const useMeetingTranscripts = (meetingId: string | undefined) => {
+  return useQuery({
+    queryKey: ['meetings', meetingId, 'transcripts'],
+    queryFn: () => fetcher<MeetingTranscriptResponse[]>(`/meetings/${meetingId}/transcript`),
+    enabled: !!meetingId,
+    refetchInterval: false,
+  });
+};
+
+export const useStartStt = () => {
+  return useMutation({
+    mutationFn: (meetingId: string) => 
+      fetcher<{ status: string; message: string }>(`/meetings/${meetingId}/start-stt`, {
+        method: 'POST',
+      }),
+  });
+};

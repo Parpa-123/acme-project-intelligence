@@ -70,3 +70,19 @@ class MeetingChatMessageResponse(BaseModel):
     message_type: str
     created_at: datetime
 
+class MeetingTranscriptResponse(BaseModel):
+    id: UUID
+    meeting_id: UUID
+    user_id: int
+    user_name: str
+    text: str
+    is_final: bool
+    created_at: datetime
+
+class TranscriptEvent(BaseModel):
+    participant_id: str
+    user_name: str
+    text: str
+    is_final: bool
+
+

@@ -10,9 +10,11 @@ import {
   useDisconnectButton,
 } from '@livekit/components-react';
 import { Track, ConnectionState } from 'livekit-client';
-import { Video, Mic, MicOff, VideoOff, PhoneOff, MonitorUp, Loader2, MessageSquare } from 'lucide-react';
+import { Video, Mic, MicOff, VideoOff, PhoneOff, MonitorUp, Loader2, MessageSquare, FileText, Users, Bot, BotOff } from 'lucide-react';
 import { useLeaveMeeting } from '../../api/meetings';
-import { ChatSidebar } from './ChatSidebar';
+import { RightSidebar } from './RightSidebar';
+import type { SidebarTab } from './RightSidebar';
+import { useAudioStreamer } from '../../hooks/useAudioStreamer';
 
 export function MeetingRoom() {
   const location = useLocation();
@@ -59,8 +61,17 @@ export function MeetingRoom() {
 
 function MeetingUI({ meetingId }: { meetingId: string }) {
   const connectionState = useConnectionState();
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<SidebarTab>('chat');
   
+  const [isTranscriptionEnabled, setIsTranscriptionEnabled] = useState(false);
+  const [sttMode, setSttMode] = useState('transcribe');
+  const [sttLanguage, setSttLanguage] = useState('en-IN');
+  
+  // Transcription is handled entirely server-side by the LiveKit Agent now.
+  // We keep the state here if we want to pass user preferences (mode, language) in the future
+  // via a data message or explicit dispatch.
+
   // Get all camera and screenshare tracks
   const tracks = useTracks(
     [
@@ -78,6 +89,15 @@ function MeetingUI({ meetingId }: { meetingId: string }) {
       </div>
     );
   }
+
+  const toggleSidebar = (tab: SidebarTab) => {
+    if (isSidebarOpen && activeTab === tab) {
+      setIsSidebarOpen(false);
+    } else {
+      setActiveTab(tab);
+      setIsSidebarOpen(true);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col h-full">
@@ -103,19 +123,57 @@ function MeetingUI({ meetingId }: { meetingId: string }) {
         </div>
       </div>
 
-      {/* Chat Sidebar */}
-      {isChatOpen && (
-        <ChatSidebar meetingId={meetingId} onClose={() => setIsChatOpen(false)} />
+      {/* Right Sidebar */}
+      {isSidebarOpen && (
+        <RightSidebar 
+          meetingId={meetingId} 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
       )}
       </div>
 
       {/* Control Bar */}
-      <CustomControlBar isChatOpen={isChatOpen} toggleChat={() => setIsChatOpen(!isChatOpen)} />
+      <CustomControlBar 
+        isSidebarOpen={isSidebarOpen} 
+        activeTab={activeTab}
+        toggleSidebar={toggleSidebar}
+        isTranscriptionEnabled={isTranscriptionEnabled}
+        setIsTranscriptionEnabled={setIsTranscriptionEnabled}
+        sttMode={sttMode}
+        setSttMode={setSttMode}
+        sttLanguage={sttLanguage}
+        setSttLanguage={setSttLanguage}
+        meetingId={meetingId}
+      />
     </div>
   );
 }
 
-function CustomControlBar({ isChatOpen, toggleChat }: { isChatOpen: boolean; toggleChat: () => void }) {
+function CustomControlBar({ 
+  isSidebarOpen, 
+  activeTab,
+  toggleSidebar,
+  isTranscriptionEnabled,
+  setIsTranscriptionEnabled,
+  sttMode,
+  setSttMode,
+  sttLanguage,
+  setSttLanguage,
+  meetingId
+}: { 
+  isSidebarOpen: boolean; 
+  activeTab: SidebarTab;
+  toggleSidebar: (tab: SidebarTab) => void;
+  isTranscriptionEnabled: boolean;
+  setIsTranscriptionEnabled: (val: boolean | ((prev: boolean) => boolean)) => void;
+  sttMode: string;
+  setSttMode: (mode: string) => void;
+  sttLanguage: string;
+  setSttLanguage: (lang: string) => void;
+  meetingId: string;
+}) {
   
   // Microphone Toggle
   const { buttonProps: micProps, enabled: isMicEnabled } = useTrackToggle({ source: Track.Source.Microphone });
@@ -130,6 +188,8 @@ function CustomControlBar({ isChatOpen, toggleChat }: { isChatOpen: boolean; tog
 
   // Disconnect Button
   const { buttonProps: disconnectProps } = useDisconnectButton({ stopTracks: true });
+
+  useAudioStreamer(meetingId, isTranscriptionEnabled, sttLanguage, sttMode);
 
   return (
     <div className="h-24 bg-gray-900 border-t border-gray-800 flex items-center justify-center gap-4 px-6">
@@ -162,13 +222,83 @@ function CustomControlBar({ isChatOpen, toggleChat }: { isChatOpen: boolean; tog
 
       <div className="w-px h-10 bg-gray-800 mx-2" />
 
+      <div className="flex items-center bg-gray-800 rounded-full pl-2 pr-4 h-14">
+        <button 
+          onClick={() => setIsTranscriptionEnabled(!isTranscriptionEnabled)}
+          className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
+            isTranscriptionEnabled ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'
+          }`}
+          title={isTranscriptionEnabled ? "Stop AI Transcription" : "Start AI Transcription"}
+        >
+          {isTranscriptionEnabled ? <Bot className="w-5 h-5" /> : <BotOff className="w-5 h-5" />}
+        </button>
+        <div className="flex flex-col ml-3 gap-1">
+          <select 
+            value={sttMode} 
+            onChange={(e) => setSttMode(e.target.value)}
+            disabled={isTranscriptionEnabled}
+            className="text-xs bg-gray-900 text-gray-300 rounded border border-gray-700 px-1 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+          >
+            <option value="transcribe">Transcribe</option>
+            <option value="translate">Translate (EN)</option>
+            <option value="codemix">Codemix</option>
+            <option value="verbatim">Verbatim</option>
+            <option value="translit">Translit</option>
+          </select>
+          <select 
+            value={sttLanguage} 
+            onChange={(e) => setSttLanguage(e.target.value)}
+            disabled={isTranscriptionEnabled}
+            className="text-xs bg-gray-900 text-gray-300 rounded border border-gray-700 px-1 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+          >
+            <option value="en-IN">English (IN)</option>
+            <option value="hi-IN">Hindi</option>
+            <option value="bn-IN">Bengali</option>
+            <option value="kn-IN">Kannada</option>
+            <option value="ml-IN">Malayalam</option>
+            <option value="mr-IN">Marathi</option>
+            <option value="or-IN">Odia</option>
+            <option value="pa-IN">Punjabi</option>
+            <option value="ta-IN">Tamil</option>
+            <option value="te-IN">Telugu</option>
+            <option value="gu-IN">Gujarati</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="w-px h-10 bg-gray-800 mx-2" />
+
+      {/* Participants Toggle */}
       <button 
-        onClick={toggleChat}
+        onClick={() => toggleSidebar('participants')}
         className={`w-14 h-14 flex items-center justify-center rounded-full transition-colors ${
-          isChatOpen ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'
+          isSidebarOpen && activeTab === 'participants' ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'
         }`}
+        title="Participants"
+      >
+        <Users className="w-6 h-6" />
+      </button>
+
+      {/* Chat Toggle */}
+      <button 
+        onClick={() => toggleSidebar('chat')}
+        className={`w-14 h-14 flex items-center justify-center rounded-full transition-colors ${
+          isSidebarOpen && activeTab === 'chat' ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'
+        }`}
+        title="Chat"
       >
         <MessageSquare className="w-6 h-6" />
+      </button>
+
+      {/* Transcript Toggle */}
+      <button 
+        onClick={() => toggleSidebar('transcript')}
+        className={`w-14 h-14 flex items-center justify-center rounded-full transition-colors ${
+          isSidebarOpen && activeTab === 'transcript' ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'
+        }`}
+        title="Transcript"
+      >
+        <FileText className="w-6 h-6" />
       </button>
 
       <div className="w-px h-10 bg-gray-800 mx-2" />

@@ -2,6 +2,7 @@ import os
 import resend
 from arq.connections import RedisSettings
 
+
 # Ensure API key is picked up from env
 resend.api_key = os.environ.get("RESEND_API_KEY", "dummy_key")
 
@@ -38,8 +39,13 @@ async def send_project_invitation_email(ctx, email: str, inviter_name: str, proj
         print(f"Error sending email to {email}: {str(e)}")
         raise
 
+
+
+
+
 class WorkerSettings:
     functions = [send_project_invitation_email]
+    job_timeout = 3600  # Allow long running tasks (1 hour)
     
     # We use redis as hostname since we run in docker-compose.
     redis_settings = RedisSettings(host=os.environ.get("REDIS_HOST", "redis"), port=6379)

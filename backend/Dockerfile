@@ -20,9 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install dependencies
 COPY requirements.txt .
 
+
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --requirement requirements.txt
-
 # Copy application source
 COPY . .
 

@@ -1,0 +1,107 @@
+import { useEffect, useRef, useState } from 'react';
+import { useMeetingTranscripts } from '../../api/meetings';
+import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+
+export function TranscriptPanel({ meetingId }: { meetingId: string }) {
+  const { data: transcripts, isLoading } = useMeetingTranscripts(meetingId);
+  const [activeSpeech, setActiveSpeech] = useState<Record<string, boolean>>({});
+  const wsRef = useRef<WebSocket | null>(null);
+  const queryClient = useQueryClient();
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!meetingId) return;
+
+    const ws = new WebSocket(`ws://localhost:8000/meetings/${meetingId}/transcript/ws`);
+    wsRef.current = ws;
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'USER_ACTION') {
+        const payload = data.payload;
+        if (payload.action === 'speaking_start') {
+          setActiveSpeech(prev => ({ ...prev, [payload.speaker]: true }));
+        } else if (payload.action === 'speaking_stop') {
+          setActiveSpeech(prev => ({ ...prev, [payload.speaker]: false }));
+        }
+      } else if (data.type === 'USER_TRANSCRIPT') {
+        const payload = data.payload;
+        // Optimistically update the cache without invalidating, since backend might not have saved it yet
+        queryClient.setQueryData(['meetings', meetingId, 'transcripts'], (oldData: any) => {
+          const newData = oldData ? [...oldData] : [];
+          newData.push({
+            id: Date.now().toString(),
+            meeting_id: meetingId,
+            user_id: "client",
+            user_name: payload.user_name,
+            text: payload.text,
+            is_final: payload.is_final,
+            created_at: data.timestamp
+          });
+          return newData;
+        });
+        
+        // Also clear the speaking state since they finished their sentence
+        setActiveSpeech(prev => ({ ...prev, [payload.speaker]: false }));
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [meetingId, queryClient]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [transcripts, activeSpeech]);
+
+  if (isLoading) {
+    return <div className="p-4 text-center text-gray-500 flex-1 h-full flex items-center justify-center">Loading transcripts...</div>;
+  }
+
+  const activeSpeakers = Object.entries(activeSpeech)
+    .filter(([_, isSpeaking]) => isSpeaking)
+    .map(([speaker]) => speaker);
+
+  return (
+    <div className="flex flex-col h-full bg-white relative">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {transcripts?.length === 0 && activeSpeakers.length === 0 ? (
+          <div className="text-center text-sm text-gray-500 mt-10">
+            No transcripts yet. Start speaking to see live captions.
+          </div>
+        ) : (
+          transcripts?.map((t) => (
+            <div key={t.id} className="flex flex-col">
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-xs font-medium text-gray-900">{t.user_name}</span>
+                <span className="text-[10px] text-gray-400">
+                  {format(new Date(t.created_at), 'HH:mm')}
+                </span>
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-lg rounded-tl-none border border-gray-100">
+                {t.text}
+              </p>
+            </div>
+          ))
+        )}
+        
+        {/* Active speakers indicator */}
+        {activeSpeakers.length > 0 && (
+          <div className="flex flex-col opacity-50 animate-pulse mt-4">
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-xs font-medium text-indigo-600">
+                Someone is speaking...
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 italic bg-indigo-50 p-3 rounded-lg rounded-tl-none border border-indigo-100">
+              Capturing audio...
+            </p>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+    </div>
+  );
+}

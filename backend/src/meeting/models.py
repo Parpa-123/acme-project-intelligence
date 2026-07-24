@@ -271,3 +271,24 @@ class MeetingChatMessage(Base):
         Index("idx_meeting_chat_messages_user", "user_id"),
         Index("idx_meeting_chat_messages_created", "created_at"),
     )
+
+class MeetingTranscript(Base):
+    __tablename__ = "meeting_transcripts"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    meeting_id = Column(UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    text = Column(String, nullable=False)
+    is_final = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    meeting = relationship("Meeting")
+    user = relationship("User")
+    
+    __table_args__ = (
+        Index("idx_meeting_transcripts_meeting", "meeting_id"),
+        Index("idx_meeting_transcripts_user", "user_id"),
+        Index("idx_meeting_transcripts_created", "created_at"),
+    )
+
+
