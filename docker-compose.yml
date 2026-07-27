@@ -34,6 +34,9 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file:
       - ./backend/.env
     environment:
@@ -56,7 +59,7 @@ services:
 
   # 3. PostgreSQL
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: postgres
     restart: unless-stopped
     ports:
@@ -106,8 +109,11 @@ services:
       - "7880:7880"
       - "7881:7881"
       - "7882:7882/udp"
-    # Livekit requires a minimal dev config. It can be passed via command line flags for local dev.
-    command: --dev --bind 0.0.0.0 --node-ip 127.0.0.1 --redis-host redis:6379 --redis-password ""
+      - "3478:3478/udp"
+      - "30000-30002:30000-30002/udp"
+    command: --dev --config /etc/livekit.yaml --node-ip 192.168.0.109
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml
     depends_on:
       - redis
     networks:
@@ -157,6 +163,9 @@ services:
     container_name: backend-worker
     restart: unless-stopped
     command: arq src.worker.WorkerSettings
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file:
       - ./backend/.env
     environment:

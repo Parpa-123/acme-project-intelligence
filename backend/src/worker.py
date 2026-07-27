@@ -43,8 +43,10 @@ async def send_project_invitation_email(ctx, email: str, inviter_name: str, proj
 
 
 
+from src.knowledge.worker import process_meeting_knowledge
+
 class WorkerSettings:
-    functions = [send_project_invitation_email]
+    functions = [send_project_invitation_email, process_meeting_knowledge]
     job_timeout = 3600  # Allow long running tasks (1 hour)
     
     # We use redis as hostname since we run in docker-compose.

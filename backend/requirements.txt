@@ -112,3 +112,5 @@ websockets
 wrapt
 yarl
 zipp
+huggingface_hub
+pgvector

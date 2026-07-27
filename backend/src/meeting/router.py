@@ -300,6 +300,41 @@ def get_meeting_transcripts(
         ) for t in transcripts
     ]
 
+from pydantic import BaseModel
+from typing import List
+
+class KnowledgeChunkResponse(BaseModel):
+    chunk_index: int
+    entry_count: int
+    participants: List[str]
+    text: str
+    start_timestamp: datetime
+    end_timestamp: datetime
+
+@session_router.get("/{meeting_id}/knowledge", response_model=List[KnowledgeChunkResponse])
+def get_meeting_knowledge(meeting_id: str, db: Session = Depends(get_db)):
+    from src.knowledge.models import KnowledgeChunk
+    chunks = db.query(KnowledgeChunk).filter(KnowledgeChunk.meeting_id == meeting_id).order_by(KnowledgeChunk.chunk_index.asc()).all()
+    
+    # We resolve the participant IDs to names just like the plan requested
+    results = []
+    for c in chunks:
+        participant_names = []
+        for p_id in c.participant_ids:
+            u = db.query(User).filter(User.id == p_id).first()
+            if u:
+                participant_names.append(u.full_name or u.email.split('@')[0])
+                
+        results.append(KnowledgeChunkResponse(
+            chunk_index=c.chunk_index,
+            entry_count=c.entry_count,
+            participants=participant_names,
+            text=c.text,
+            start_timestamp=c.start_timestamp,
+            end_timestamp=c.end_timestamp
+        ))
+    return results
+
 @session_router.websocket("/{meeting_id}/transcript/ws")
 async def websocket_transcript(websocket: WebSocket, meeting_id: str, db: Session = Depends(get_db)):
     await websocket.accept()
@@ -370,9 +405,11 @@ async def websocket_stt_proxy(
         await websocket.close(code=1011, reason="Server error")
         return
 
-    # User ID extraction is skipped for simplicity in WS, assume anonymous or pass token if needed.
-    # In production, verify session token here.
-    user_name = "User"
+    # Resolve a user to attribute the transcript to (fallback to space creator)
+    from src.meeting.models import MeetingParticipant
+    participant = db.query(MeetingParticipant).filter(MeetingParticipant.meeting_id == meeting.id).first()
+    attributed_user = participant.user if participant else meeting.meeting_space.creator
+    user_name = attributed_user.full_name or attributed_user.email.split('@')[0]
 
     redis_host = os.environ.get("REDIS_HOST", "redis")
     redis_client = aioredis.Redis(host=redis_host, port=6379, db=0)

@@ -18,13 +18,31 @@ from src.database import engine
 from src import models
 from src.projects import models as project_models
 from src.meeting import models as meeting_models
+from src.knowledge import models as knowledge_models
 
 models.Base.metadata.create_all(bind=engine)
+
+from contextlib import asynccontextmanager
+import asyncio
+from src.meeting.consumer import consume_meeting_events
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: spawn the redis consumer
+    task = asyncio.create_task(consume_meeting_events())
+    yield
+    # Shutdown: cancel the consumer
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
 
 app = FastAPI(
     title="MyApp API",
     version="1.0.0",
     description="FastAPI backend with SuperTokens Social Auth (Google + GitHub)",
+    lifespan=lifespan,
 )
 
 # ── 3. SuperTokens ASGI middleware ─────────────────────────────────────────────
