@@ -177,3 +177,35 @@ export interface MeetingTranscriptResponse {
   created_at: string;
 }
 
+export interface RetrievalRequest {
+  query: string;
+  meeting_id?: string | null;
+}
+
+export interface RetrievalCandidate {
+  chunk_id: string;
+  meeting_id: string;
+  score: number;
+  text: string;
+  metadata: Record<string, any>;
+}
+
+export interface RetrievalResponse {
+  query: string;
+  results: RetrievalCandidate[];
+}
+
+export interface ContextSource {
+  chunk_id: string;
+  meeting_id: string;
+  sequence_number: number;
+  score: number;
+  rerank_score: number;
+}
+
+export interface ContextPackage {
+  context_text: string;
+  total_tokens: number;
+  sources: ContextSource[];
+  metadata: Record<string, any>;
+}
