@@ -151,6 +151,38 @@ def update_meeting_space(
     # We can just redirect to the GET endpoint logic
     return get_meeting_space(space_id, db, session)
 
+@space_router.get("/{space_id}/meetings")
+def get_meeting_history(
+    space_id: str,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    repo = MeetingSpaceRepository(db)
+    space = repo.get_meeting_space_by_id(space_id)
+    if not space:
+        raise HTTPException(status_code=404, detail="Meeting space not found")
+        
+    project_service = ProjectService(db)
+    user = project_service._get_user_by_supertokens_id(session.get_user_id())
+    project_service._check_project_access(space.project_id, user.id)
+    
+    from .models import Meeting, MeetingStatus
+    
+    meetings = db.query(Meeting).filter(
+        Meeting.meeting_space_id == space.id,
+        Meeting.status == MeetingStatus.COMPLETED
+    ).order_by(Meeting.ended_at.desc()).all()
+    
+    return [
+        {
+            "id": m.id,
+            "name": m.name,
+            "status": m.status.value,
+            "started_at": m.started_at,
+            "ended_at": m.ended_at
+        } for m in meetings
+    ]
+
 @space_router.post("/{space_id}/archive", status_code=204)
 def archive_meeting_space(
     space_id: str,
@@ -304,6 +336,7 @@ from pydantic import BaseModel
 from typing import List
 
 class KnowledgeChunkResponse(BaseModel):
+    id: str
     chunk_index: int
     entry_count: int
     participants: List[str]
@@ -326,6 +359,7 @@ def get_meeting_knowledge(meeting_id: str, db: Session = Depends(get_db)):
                 participant_names.append(u.full_name or u.email.split('@')[0])
                 
         results.append(KnowledgeChunkResponse(
+            id=str(c.id),
             chunk_index=c.chunk_index,
             entry_count=c.entry_count,
             participants=participant_names,
@@ -334,6 +368,66 @@ def get_meeting_knowledge(meeting_id: str, db: Session = Depends(get_db)):
             end_timestamp=c.end_timestamp
         ))
     return results
+
+# ==========================================
+# Meeting Intelligence (Enrichment) APIs
+# ==========================================
+
+from src.enrichment.models import (
+    MeetingSummary, MeetingDecision, MeetingActionItem, 
+    MeetingRequirement, MeetingConcern, MeetingTopic
+)
+from src.meeting.models import MeetingProcessingStatus
+
+@session_router.get("/{meeting_id}/processing")
+def get_meeting_processing_status(meeting_id: str, db: Session = Depends(get_db)):
+    record = db.query(MeetingProcessingStatus).filter_by(meeting_id=meeting_id).first()
+    if not record:
+        return {
+            "transcript_status": "pending",
+            "knowledge_status": "pending",
+            "enrichment_status": "pending",
+            "error_message": None
+        }
+    return {
+        "transcript_status": record.transcript_status,
+        "knowledge_status": record.knowledge_status,
+        "enrichment_status": record.enrichment_status,
+        "error_message": record.error_message,
+        "last_updated": record.last_updated
+    }
+
+@session_router.get("/{meeting_id}/summary")
+def get_meeting_summary(meeting_id: str, db: Session = Depends(get_db)):
+    record = db.query(MeetingSummary).filter_by(meeting_id=meeting_id).first()
+    if not record:
+        return {"summary": None}
+    return {"summary": record.summary, "model": record.model, "created_at": record.created_at}
+
+@session_router.get("/{meeting_id}/decisions")
+def get_meeting_decisions(meeting_id: str, db: Session = Depends(get_db)):
+    records = db.query(MeetingDecision).filter_by(meeting_id=meeting_id).all()
+    return [{"id": r.id, "decision": r.decision, "confidence": r.confidence, "knowledge_chunk_id": r.knowledge_chunk_id} for r in records]
+
+@session_router.get("/{meeting_id}/action-items")
+def get_meeting_action_items(meeting_id: str, db: Session = Depends(get_db)):
+    records = db.query(MeetingActionItem).filter_by(meeting_id=meeting_id).all()
+    return [{"id": r.id, "assignee": r.assignee, "description": r.description, "due_date": r.due_date, "status": r.status, "knowledge_chunk_id": r.knowledge_chunk_id} for r in records]
+
+@session_router.get("/{meeting_id}/requirements")
+def get_meeting_requirements(meeting_id: str, db: Session = Depends(get_db)):
+    records = db.query(MeetingRequirement).filter_by(meeting_id=meeting_id).all()
+    return [{"id": r.id, "requirement": r.requirement, "priority": r.priority, "knowledge_chunk_id": r.knowledge_chunk_id} for r in records]
+
+@session_router.get("/{meeting_id}/concerns")
+def get_meeting_concerns(meeting_id: str, db: Session = Depends(get_db)):
+    records = db.query(MeetingConcern).filter_by(meeting_id=meeting_id).all()
+    return [{"id": r.id, "concern": r.concern, "severity": r.severity, "knowledge_chunk_id": r.knowledge_chunk_id} for r in records]
+
+@session_router.get("/{meeting_id}/topics")
+def get_meeting_topics(meeting_id: str, db: Session = Depends(get_db)):
+    records = db.query(MeetingTopic).filter_by(meeting_id=meeting_id).all()
+    return [{"id": r.id, "topic": r.topic, "knowledge_chunk_id": r.knowledge_chunk_id} for r in records]
 
 @session_router.websocket("/{meeting_id}/transcript/ws")
 async def websocket_transcript(websocket: WebSocket, meeting_id: str, db: Session = Depends(get_db)):

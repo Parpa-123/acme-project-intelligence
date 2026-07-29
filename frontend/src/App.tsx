@@ -15,6 +15,7 @@ import { SettingsPage } from './pages/settings/SettingsPage';
 import { AcceptInvitePage } from './pages/invites/AcceptInvite';
 import { MeetingPreJoin } from './pages/meetings/MeetingPreJoin';
 import { MeetingRoom } from './pages/meetings/MeetingRoom';
+import { MeetingIntelligence } from './pages/meetings/MeetingIntelligence';
 
 SuperTokens.init({
   appInfo: {
@@ -29,7 +30,7 @@ SuperTokens.init({
       signInAndUpFeature: {
         providers: [Github.init(), Google.init()],
       },
-      getRedirectionURL: async (context: any) => {
+      getRedirectionURL: async (context: { action: string }) => {
         if (context.action === "SUCCESS") {
           return "/dashboard";
         }
@@ -82,6 +83,7 @@ const App = () => {
           >
             <Route path="/projects/:projectId/spaces/:spaceId/join" element={<MeetingPreJoin />} />
             <Route path="/projects/:projectId/spaces/:spaceId/room" element={<MeetingRoom />} />
+            <Route path="/projects/:projectId/spaces/:spaceId/meetings/:meetingId/intelligence" element={<MeetingIntelligence />} />
           </Route>
           
           {/* Catch-all */}

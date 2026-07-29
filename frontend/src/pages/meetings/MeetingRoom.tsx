@@ -50,16 +50,15 @@ export function MeetingRoom() {
       audio={initialAudio}
       token={token}
       serverUrl={url}
-      onDisconnected={handleDisconnected}
       className="h-screen w-screen bg-gray-950 flex flex-col overflow-hidden"
     >
-      <MeetingUI meetingId={meetingId} />
+      <MeetingUI meetingId={meetingId} onLeave={handleDisconnected} />
       <RoomAudioRenderer />
     </LiveKitRoom>
   );
 }
 
-function MeetingUI({ meetingId }: { meetingId: string }) {
+function MeetingUI({ meetingId, onLeave }: { meetingId: string, onLeave: () => void }) {
   const connectionState = useConnectionState();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>('chat');
@@ -146,6 +145,7 @@ function MeetingUI({ meetingId }: { meetingId: string }) {
         sttLanguage={sttLanguage}
         setSttLanguage={setSttLanguage}
         meetingId={meetingId}
+        onLeave={onLeave}
       />
     </div>
   );
@@ -161,7 +161,8 @@ function CustomControlBar({
   setSttMode,
   sttLanguage,
   setSttLanguage,
-  meetingId
+  meetingId,
+  onLeave
 }: { 
   isSidebarOpen: boolean; 
   activeTab: SidebarTab;
@@ -173,6 +174,7 @@ function CustomControlBar({
   sttLanguage: string;
   setSttLanguage: (lang: string) => void;
   meetingId: string;
+  onLeave: () => void;
 }) {
   
   // Microphone Toggle
@@ -188,6 +190,11 @@ function CustomControlBar({
 
   // Disconnect Button
   const { buttonProps: disconnectProps } = useDisconnectButton({ stopTracks: true });
+
+  const handleDisconnect = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disconnectProps.onClick) disconnectProps.onClick(e);
+    onLeave();
+  };
 
   useAudioStreamer(meetingId, isTranscriptionEnabled, sttLanguage, sttMode);
 
@@ -305,6 +312,7 @@ function CustomControlBar({
 
       <button 
         {...disconnectProps}
+        onClick={handleDisconnect}
         className="w-14 h-14 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors"
       >
         <PhoneOff className="w-6 h-6" />

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMeetingTranscripts } from '../../api/meetings';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import type { MeetingTranscriptResponse } from '../../types';
 
 export function TranscriptPanel({ meetingId }: { meetingId: string }) {
   const { data: transcripts, isLoading } = useMeetingTranscripts(meetingId);
@@ -28,7 +29,7 @@ export function TranscriptPanel({ meetingId }: { meetingId: string }) {
       } else if (data.type === 'USER_TRANSCRIPT') {
         const payload = data.payload;
         // Optimistically update the cache without invalidating, since backend might not have saved it yet
-        queryClient.setQueryData(['meetings', meetingId, 'transcripts'], (oldData: any) => {
+        queryClient.setQueryData(['meetings', meetingId, 'transcripts'], (oldData: MeetingTranscriptResponse[] | undefined) => {
           const newData = oldData ? [...oldData] : [];
           newData.push({
             id: Date.now().toString(),

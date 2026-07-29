@@ -120,15 +120,15 @@ class MeetingSessionService:
 
     def leave_meeting(self, meeting_id: str, user_id: int):
         meeting_uuid = uuid.UUID(meeting_id)
-        # Find active participant row
-        participant = self.db.query(MeetingParticipant).filter(
+        # Find all active participant rows for this user (handles reconnects/dev strict mode)
+        participants = self.db.query(MeetingParticipant).filter(
             MeetingParticipant.meeting_id == meeting_uuid,
             MeetingParticipant.user_id == user_id,
             MeetingParticipant.left_at == None
-        ).order_by(MeetingParticipant.joined_at.desc()).first()
+        ).all()
 
         now = datetime.now(timezone.utc)
-        if participant:
+        for participant in participants:
             participant.left_at = now
 
         # Log LEFT event
@@ -159,5 +159,16 @@ class MeetingSessionService:
                     event_type=MeetingEventType.ENDED
                 )
                 self.db.add(end_event)
+                
+                # Initialize Pipeline Tracking Status
+                from src.meeting.models import MeetingProcessingStatus
+                processing_status = MeetingProcessingStatus(
+                    meeting_id=meeting_uuid
+                )
+                self.db.add(processing_status)
+                
+                # Enqueue the Knowledge Worker to kick off the AI Pipeline
+                from src.arq_client import enqueue_arq_job
+                enqueue_arq_job("process_meeting_knowledge", meeting_id)
                 
         self.db.commit()

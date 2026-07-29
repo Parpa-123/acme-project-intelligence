@@ -291,4 +291,22 @@ class MeetingTranscript(Base):
         Index("idx_meeting_transcripts_created", "created_at"),
     )
 
+class PipelineStatus(str, Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+class MeetingProcessingStatus(Base):
+    __tablename__ = "meeting_processing_status"
+    
+    meeting_id = Column(UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), primary_key=True)
+    transcript_status = Column(SQLEnum(PipelineStatus, name="pipeline_status_enum"), default=PipelineStatus.PENDING, nullable=False)
+    knowledge_status = Column(SQLEnum(PipelineStatus, name="pipeline_status_enum"), default=PipelineStatus.PENDING, nullable=False)
+    enrichment_status = Column(SQLEnum(PipelineStatus, name="pipeline_status_enum"), default=PipelineStatus.PENDING, nullable=False)
+    error_message = Column(String, nullable=True)
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    
+    meeting = relationship("Meeting")
+
 

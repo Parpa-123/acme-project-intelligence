@@ -46,3 +46,9 @@ class UserPreferences(Base):
 
     # Relationships
     user = relationship("User", back_populates="user_preferences")
+
+# Import sub-module models so they are registered with Base metadata for Alembic
+from src.meeting.models import Meeting, MeetingParticipant, MeetingTranscript, MeetingChatMessage, MeetingProcessingStatus
+from src.projects.models import Project, ProjectMembers, ProjectInvitation
+from src.knowledge.models import KnowledgeChunk
+from src.enrichment.models import MeetingSummary, MeetingDecision, MeetingActionItem, MeetingRequirement, MeetingConcern, MeetingTopic

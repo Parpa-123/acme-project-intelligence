@@ -33,8 +33,8 @@ export function ChatSidebar({ meetingId, onClose }: { meetingId: string; onClose
   useEffect(() => {
     const handleData = (
       payload: Uint8Array,
-      _participant?: any,
-      _kind?: any,
+      _participant?: unknown,
+      _kind?: unknown,
       topic?: string
     ) => {
       if (topic === 'chat') {

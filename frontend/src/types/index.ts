@@ -107,3 +107,73 @@ export interface MeetingJoinResponse {
   expires_at: string;
 }
 
+export interface MeetingHistoryResponse {
+  id: string;
+  name: string | null;
+  status: string;
+  started_at: string;
+  ended_at: string | null;
+}
+
+export interface KnowledgeChunkResponse {
+  id: string;
+  chunk_index: number;
+  entry_count: number;
+  participants: string[];
+  text: string;
+  start_timestamp: string;
+  end_timestamp: string;
+}
+
+export interface MeetingSummaryResponse {
+  summary: string | null;
+  model?: string;
+  created_at?: string;
+}
+
+export interface MeetingDecisionResponse {
+  id: number;
+  decision: string;
+  confidence: string;
+  knowledge_chunk_id: string;
+}
+
+export interface MeetingActionItemResponse {
+  id: number;
+  assignee: string;
+  description: string;
+  due_date: string | null;
+  status: string;
+  knowledge_chunk_id: string;
+}
+
+export interface MeetingRequirementResponse {
+  id: number;
+  requirement: string;
+  priority: string;
+  knowledge_chunk_id: string;
+}
+
+export interface MeetingConcernResponse {
+  id: number;
+  concern: string;
+  severity: string;
+  knowledge_chunk_id: string;
+}
+
+export interface MeetingTopicResponse {
+  id: number;
+  topic: string;
+  knowledge_chunk_id: string;
+}
+
+export interface MeetingTranscriptResponse {
+  id: string;
+  meeting_id: string;
+  user_id: number | string;
+  user_name: string;
+  text: string;
+  is_final: boolean;
+  created_at: string;
+}
+

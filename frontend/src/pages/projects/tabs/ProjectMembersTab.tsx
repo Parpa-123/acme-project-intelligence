@@ -91,7 +91,7 @@ export function ProjectMembersTab({
             <li key={member.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-4">
                 {member.user?.avatar_url ? (
-                  <img src={member.user.avatar_url} alt="" className="w-10 h-10 rounded-full bg-gray-100 object-cover" />
+                  <img src={member.user.avatar_url} alt="" className="w-10 h-10 rounded-full bg-gray-100 object-cover" referrerPolicy="no-referrer" />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center font-medium">
                     {member.user?.email.charAt(0).toUpperCase()}

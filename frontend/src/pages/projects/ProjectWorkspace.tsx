@@ -3,10 +3,11 @@ import { useParams, Navigate } from 'react-router-dom';
 import { useProjectDashboard } from '../../api/projects';
 import { useCurrentUser } from '../../api/user';
 import { Badge } from '../../components/ui/Badge';
-import { FaUsers, FaEnvelope, FaCog, FaCalendar } from 'react-icons/fa';
+import { FaUsers, FaEnvelope, FaCog, FaCalendar, FaBook } from 'react-icons/fa';
 import { ProjectSettingsTab } from './tabs/ProjectSettingsTab';
 import { ProjectMembersTab } from './tabs/ProjectMembersTab';
 import { ProjectMeetingsTab } from './tabs/ProjectMeetingsTab';
+import { ProjectKnowledgeTab } from './tabs/ProjectKnowledgeTab';
 
 export function ProjectWorkspace() {
   const { id } = useParams<{ id: string }>();
@@ -14,7 +15,7 @@ export function ProjectWorkspace() {
   
   const { data: dashboard, isLoading, error } = useProjectDashboard(projectId);
   const { data: currentUser } = useCurrentUser();
-  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'meetings' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'knowledge' | 'members' | 'meetings' | 'settings'>('overview');
 
   if (isNaN(projectId)) return <Navigate to="/projects" replace />;
   if (isLoading) return <div className="animate-pulse text-gray-500">Loading workspace...</div>;
@@ -54,7 +55,7 @@ export function ProjectWorkspace() {
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
-          {(['overview', 'members', 'meetings', 'settings'] as const).map((tab) => {
+          {(['overview', 'knowledge', 'members', 'meetings', 'settings'] as const).map((tab) => {
             // Hide settings tab if not admin
             if (tab === 'settings' && !isAdmin) return null;
             
@@ -72,6 +73,7 @@ export function ProjectWorkspace() {
               >
                 {tab === 'settings' && <FaCog className="inline mr-2 mb-0.5" />}
                 {tab === 'meetings' && <FaCalendar className="inline mr-2 mb-0.5" />}
+                {tab === 'knowledge' && <FaBook className="inline mr-2 mb-0.5" />}
                 {tab}
               </button>
             );
@@ -91,6 +93,12 @@ export function ProjectWorkspace() {
                 <p className="text-xs text-gray-400 mt-2">More dashboard features coming soon.</p>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'knowledge' && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <ProjectKnowledgeTab projectId={projectId} />
           </div>
         )}
 

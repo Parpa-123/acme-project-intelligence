@@ -12,7 +12,42 @@ const createSpaceSchema = z.object({
   description: z.string().optional(),
 });
 
+import type { MeetingSpaceListResponse } from '../../../types';
+
 type CreateSpaceFormValues = z.infer<typeof createSpaceSchema>;
+
+function SpaceCard({ space, handleJoin }: { space: MeetingSpaceListResponse, handleJoin: (id: string) => void }) {
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-indigo-50 rounded-lg">
+            <Video className="h-5 w-5 text-indigo-600" />
+          </div>
+          <h3 className="text-md font-semibold text-gray-900">{space.name}</h3>
+        </div>
+        {space.active_session && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
+            Live
+          </span>
+        )}
+      </div>
+      
+      {/* History moved to Knowledge Tab */}
+
+      <div className="mt-auto pt-4">
+        <button
+          onClick={() => handleJoin(space.id)}
+          className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Join Meeting
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function ProjectMeetingsTab({ projectId }: { projectId: number }) {
   const { data: spaces, isLoading, error } = useMeetingSpaces(projectId);
@@ -111,30 +146,7 @@ export function ProjectMeetingsTab({ projectId }: { projectId: number }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {spaces?.map((space) => (
-            <div key={space.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-indigo-50 rounded-lg">
-                    <Video className="h-5 w-5 text-indigo-600" />
-                  </div>
-                  <h3 className="text-md font-semibold text-gray-900">{space.name}</h3>
-                </div>
-                {space.active_session && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
-                    Live
-                  </span>
-                )}
-              </div>
-              <div className="mt-auto pt-4">
-                <button
-                  onClick={() => handleJoin(space.id)}
-                  className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Join Meeting
-                </button>
-              </div>
-            </div>
+            <SpaceCard key={space.id} space={space} handleJoin={handleJoin} />
           ))}
         </div>
       )}

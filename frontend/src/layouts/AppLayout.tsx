@@ -70,7 +70,7 @@ export function AppLayout() {
               trigger={
                 <button className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none">
                   {user?.avatar_url ? (
-                    <img src={user.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full border border-gray-200 object-cover" />
+                    <img src={user.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full border border-gray-200 object-cover" referrerPolicy="no-referrer" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-white text-sm font-medium shadow-sm">
                       {user?.email.charAt(0).toUpperCase()}

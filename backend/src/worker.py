@@ -37,17 +37,17 @@ async def send_project_invitation_email(ctx, email: str, inviter_name: str, proj
         return result
     except Exception as e:
         print(f"Error sending email to {email}: {str(e)}")
+
         raise
 
 
-
-
-
 from src.knowledge.worker import process_meeting_knowledge
+from src.enrichment.worker import enrich_meeting
 
 class WorkerSettings:
-    functions = [send_project_invitation_email, process_meeting_knowledge]
+    functions = [send_project_invitation_email, process_meeting_knowledge, enrich_meeting]
     job_timeout = 3600  # Allow long running tasks (1 hour)
+    max_tries = 3
     
     # We use redis as hostname since we run in docker-compose.
     redis_settings = RedisSettings(host=os.environ.get("REDIS_HOST", "redis"), port=6379)

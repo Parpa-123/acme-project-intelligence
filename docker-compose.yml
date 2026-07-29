@@ -111,7 +111,7 @@ services:
       - "7882:7882/udp"
       - "3478:3478/udp"
       - "30000-30002:30000-30002/udp"
-    command: --dev --config /etc/livekit.yaml --node-ip 192.168.0.109
+    command: --dev --config /etc/livekit.yaml --node-ip 127.0.0.1
     volumes:
       - ./livekit.yaml:/etc/livekit.yaml
     depends_on:
