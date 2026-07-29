@@ -1,1 +1,45 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+  --color-canvas-center: #1A1A1A;
+  --color-canvas-edge: #080808;
+  --color-canvas-surface: rgba(255, 255, 255, 0.03);
+  --color-canvas-surface-hover: rgba(255, 255, 255, 0.08);
+
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+}
+
+@layer utilities {
+  .bg-gradient-radial {
+    background: radial-gradient(circle at center, var(--color-canvas-center) 0%, var(--color-canvas-edge) 100%);
+  }
+
+  .text-glow-sm {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+
+  .text-glow-md {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2), 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+
+  .text-glow-lg {
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.3), 0 0 24px rgba(255, 255, 255, 0.15), 0 0 36px rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-panel {
+    background-color: var(--color-canvas-surface);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--color-glass-border);
+  }
+
+  .glass-panel:hover {
+    background-color: var(--color-canvas-surface-hover);
+  }
+}
+
+body {
+  background: radial-gradient(circle at center, var(--color-canvas-center) 0%, var(--color-canvas-edge) 100%);
+  @apply text-gray-100 min-h-screen antialiased selection:bg-indigo-500/30;
+}

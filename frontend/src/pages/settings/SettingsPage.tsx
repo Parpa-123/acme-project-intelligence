@@ -4,24 +4,26 @@ import { Button } from '../../components/ui/Button';
 export function SettingsPage() {
   const { data: user, isLoading } = useCurrentUser();
 
-  if (isLoading) return <div className="animate-pulse text-gray-500">Loading settings...</div>;
-  if (!user) return <div className="text-red-500">Error loading profile.</div>;
+  if (isLoading) return <div className="animate-pulse text-gray-400 text-glow-sm">Loading settings...</div>;
+  if (!user) return <div className="text-red-400 text-glow-sm">Error loading profile.</div>;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Account Settings</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage your personal profile and preferences.</p>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight text-glow-md">Account Settings</h1>
+        <p className="text-sm text-gray-400 mt-1">Manage your personal profile and preferences.</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm max-w-2xl">
-        <h2 className="text-lg font-semibold text-gray-900 mb-5">Profile Information</h2>
+      <div className="glass-panel rounded-3xl border border-white/10 p-10 shadow-[0_0_30px_rgba(0,0,0,0.4)] max-w-2xl relative overflow-hidden">
+        {/* Glow behind the card */}
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none" />
+        <h2 className="text-xl font-bold text-white text-glow-md mb-8 relative z-10">Profile Information</h2>
         
         <div className="flex items-center gap-6 mb-8">
           {user.avatar_url ? (
-            <img src={user.avatar_url} alt="" className="w-20 h-20 rounded-full border border-gray-200 object-cover" referrerPolicy="no-referrer" />
+            <img src={user.avatar_url} alt="" className="w-24 h-24 rounded-full border border-white/20 object-cover shadow-lg" referrerPolicy="no-referrer" />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-gray-900 flex items-center justify-center text-white text-3xl font-medium shadow-sm">
+            <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center text-white text-3xl font-bold shadow-[0_0_15px_rgba(255,255,255,0.1)] ring-1 ring-white/20">
               {user.email.charAt(0).toUpperCase()}
             </div>
           )}
@@ -30,28 +32,28 @@ export function SettingsPage() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+        <div className="space-y-5">
+          <div className="relative z-10">
+            <label className="block text-sm font-bold text-gray-300 mb-2">Full Name</label>
             <input 
               type="text" 
-              className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-not-allowed"
+              className="w-full rounded-xl border border-white/10 bg-[#0A0A0A] px-4 py-3 text-sm text-gray-400 cursor-not-allowed shadow-[0_0_15px_rgba(0,0,0,0.5)] inset-shadow focus:outline-none focus:border-white/20 transition-all"
               value={user.full_name || ''}
               disabled
               title="Updating profile via UI is not implemented in the current scope."
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+          <div className="relative z-10">
+            <label className="block text-sm font-bold text-gray-300 mb-2">Email Address</label>
             <input 
               type="email" 
-              className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-not-allowed"
+              className="w-full rounded-xl border border-white/10 bg-[#0A0A0A] px-4 py-3 text-sm text-gray-400 cursor-not-allowed shadow-[0_0_15px_rgba(0,0,0,0.5)] inset-shadow focus:outline-none focus:border-white/20 transition-all"
               value={user.email}
               disabled
             />
           </div>
           
-          <div className="pt-4 border-t border-gray-100 flex justify-end">
+          <div className="pt-8 mt-8 border-t border-white/10 flex justify-end relative z-10">
             <Button disabled>Save Changes</Button>
           </div>
         </div>

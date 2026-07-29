@@ -58,8 +58,8 @@ export function ProjectList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Projects</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your team's workspaces and collaborations.</p>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight text-glow-md">Projects</h1>
+          <p className="text-sm text-gray-400 mt-1">Manage your team's workspaces and collaborations.</p>
         </div>
         <Button onClick={() => setModalOpen(true)}>
           <FaPlus className="mr-2 h-3.5 w-3.5" /> New Project
@@ -67,12 +67,12 @@ export function ProjectList() {
       </div>
 
       {!projects || projects.length === 0 ? (
-        <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-12 text-center flex flex-col items-center">
-          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+        <div className="glass-panel border border-dashed border-white/20 rounded-2xl p-12 text-center flex flex-col items-center shadow-[0_0_20px_rgba(0,0,0,0.3)]">
+          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 ring-1 ring-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]">
             <FaFolderOpen className="text-gray-400 text-2xl" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900">No projects found</h3>
-          <p className="text-sm text-gray-500 mt-1 max-w-sm">Get started by creating a new project. You can invite your team members right away.</p>
+          <h3 className="text-lg font-bold text-white text-glow-sm">No projects found</h3>
+          <p className="text-sm text-gray-400 mt-2 max-w-sm">Get started by creating a new project. You can invite your team members right away.</p>
           <Button onClick={() => setModalOpen(true)} className="mt-6">
             Create Project
           </Button>
@@ -83,17 +83,17 @@ export function ProjectList() {
             <Link 
               key={project.id} 
               to={`/projects/${project.id}`}
-              className="group bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-gray-300 transition-all flex flex-col h-full"
+              className="group glass-panel rounded-2xl p-6 shadow-[0_0_15px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.15)] transition-all flex flex-col h-full hover:-translate-y-1 border border-white/10 hover:border-indigo-500/30 cursor-pointer"
             >
               <div className="flex justify-between items-start mb-3">
-                <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{project.name}</h3>
+                <h3 className="font-bold text-white group-hover:text-indigo-300 transition-colors text-glow-sm">{project.name}</h3>
                 <Badge variant={project.visibility === 'public' ? 'secondary' : 'outline'}>{project.visibility}</Badge>
               </div>
-              <p className="text-sm text-gray-500 line-clamp-2 flex-1">{project.description || 'No description provided.'}</p>
-              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+              <p className="text-sm text-gray-400 line-clamp-2 flex-1 mt-1">{project.description || 'No description provided.'}</p>
+              <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-gray-500">
                 <span>Created {new Date(project.created_at).toLocaleDateString()}</span>
                 {/* ID could be useful for debugging or referencing */}
-                <span className="font-mono">#{project.id}</span>
+                <span className="font-mono text-gray-600">#{project.id}</span>
               </div>
             </Link>
           ))}
@@ -122,23 +122,23 @@ export function ProjectList() {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Visibility</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Visibility</label>
               <select 
                 {...methods.register('visibility')}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-inner"
               >
-                <option value="private">Private (Invite-only)</option>
-                <option value="public">Public (Anyone can see)</option>
+                <option value="private" className="bg-[#1A1A1A]">Private (Invite-only)</option>
+                <option value="public" className="bg-[#1A1A1A]">Public (Anyone can see)</option>
               </select>
             </div>
 
-            <div className="pt-2 border-t border-gray-100">
+            <div className="pt-4 border-t border-white/10 mt-6">
               <FormInput 
                 name="invite_emails" 
                 label="Initial Invites (Required)" 
                 placeholder="alice@example.com, bob@example.com" 
               />
-              <p className="text-xs text-gray-500 mt-1">Enter comma-separated emails. The backend requires at least one invite email on creation.</p>
+              <p className="text-xs text-gray-500 mt-2">Enter comma-separated emails. The backend requires at least one invite email on creation.</p>
             </div>
 
             <div className="mt-6 flex justify-end gap-3">

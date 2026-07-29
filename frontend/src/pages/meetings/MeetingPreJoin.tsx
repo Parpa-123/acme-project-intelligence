@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useJoinMeeting, useMeetingSpaceDetail } from '../../api/meetings';
 import { Video, Mic, MicOff, VideoOff, ChevronLeft, Loader2 } from 'lucide-react';
 import { createLocalVideoTrack, LocalVideoTrack } from 'livekit-client';
+import { Button } from '../../components/ui/Button';
 
 export function MeetingPreJoin() {
   const { projectId, spaceId } = useParams<{ projectId: string; spaceId: string }>();
@@ -67,18 +68,20 @@ export function MeetingPreJoin() {
   };
 
   if (isLoadingSpace) {
-    return <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-white" />
+    return <div className="min-h-screen bg-[#050505] flex items-center justify-center relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <Loader2 className="w-8 h-8 animate-spin text-indigo-400 drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
     </div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-[#050505] flex flex-col relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none z-0" />
       {/* Header */}
-      <header className="px-6 py-4 flex items-center border-b border-gray-800">
+      <header className="px-6 py-4 flex items-center border-b border-white/10 glass-panel">
         <button 
           onClick={() => navigate(`/projects/${projectId}`)}
-          className="text-gray-400 hover:text-white flex items-center transition-colors"
+          className="text-gray-400 hover:text-white flex items-center transition-colors cursor-pointer"
         >
           <ChevronLeft className="w-5 h-5 mr-1" />
           Back to Project
@@ -86,11 +89,11 @@ export function MeetingPreJoin() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col lg:flex-row items-center justify-center p-6 gap-12 max-w-6xl mx-auto w-full">
+      <main className="flex-1 flex flex-col lg:flex-row items-center justify-center p-6 gap-12 max-w-6xl mx-auto w-full relative z-10">
         
         {/* Left: Video Preview */}
         <div className="flex-1 w-full max-w-2xl">
-          <div className="relative aspect-video bg-gray-800 rounded-xl overflow-hidden shadow-2xl ring-1 ring-gray-700">
+          <div className="relative aspect-video glass-panel rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
             {videoEnabled ? (
               <video 
                 ref={videoRef}
@@ -112,8 +115,8 @@ export function MeetingPreJoin() {
             <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
               <button 
                 onClick={() => setAudioEnabled(!audioEnabled)}
-                className={`p-4 rounded-full shadow-lg backdrop-blur-md transition-colors ${
-                  audioEnabled ? 'bg-gray-900/60 text-white hover:bg-gray-900/80' : 'bg-red-500 text-white hover:bg-red-600'
+                className={`p-4 rounded-full shadow-lg backdrop-blur-md transition-all cursor-pointer ${
+                  audioEnabled ? 'bg-white/10 text-white hover:bg-white/20 ring-1 ring-white/20' : 'bg-red-500/80 text-white hover:bg-red-500 ring-1 ring-red-500/50'
                 }`}
               >
                 {audioEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
@@ -121,8 +124,8 @@ export function MeetingPreJoin() {
               
               <button 
                 onClick={() => setVideoEnabled(!videoEnabled)}
-                className={`p-4 rounded-full shadow-lg backdrop-blur-md transition-colors ${
-                  videoEnabled ? 'bg-gray-900/60 text-white hover:bg-gray-900/80' : 'bg-red-500 text-white hover:bg-red-600'
+                className={`p-4 rounded-full shadow-lg backdrop-blur-md transition-all cursor-pointer ${
+                  videoEnabled ? 'bg-white/10 text-white hover:bg-white/20 ring-1 ring-white/20' : 'bg-red-500/80 text-white hover:bg-red-500 ring-1 ring-red-500/50'
                 }`}
               >
                 {videoEnabled ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
@@ -132,21 +135,18 @@ export function MeetingPreJoin() {
         </div>
 
         {/* Right: Join Form */}
-        <div className="w-full lg:w-96 flex flex-col items-center lg:items-start text-center lg:text-left">
-          <h1 className="text-3xl font-bold text-white mb-2">{spaceDetail?.name || 'Meeting Room'}</h1>
+        <div className="w-full lg:w-96 flex flex-col items-center lg:items-start text-center lg:text-left glass-panel p-8 rounded-2xl border border-white/10 shadow-xl">
+          <h1 className="text-3xl font-extrabold text-white mb-3 text-glow-md">{spaceDetail?.name || 'Meeting Room'}</h1>
           <p className="text-gray-400 mb-8">{spaceDetail?.description || 'Join the persistent meeting space for this project.'}</p>
           
-          <button
+          <Button
             onClick={handleJoin}
             disabled={joinMeeting.isPending}
-            className="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-lg transition-colors flex items-center justify-center disabled:opacity-50"
+            className="w-full py-6 text-lg cursor-pointer"
+            isLoading={joinMeeting.isPending}
           >
-            {joinMeeting.isPending ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
-            ) : (
-              'Join Meeting'
-            )}
-          </button>
+            {joinMeeting.isPending ? 'Joining...' : 'Join Meeting'}
+          </Button>
           
           <p className="mt-4 text-sm text-gray-500">
             Make sure your camera and microphone are configured correctly before joining.

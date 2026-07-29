@@ -43,20 +43,20 @@ export function ProjectSettingsTab({ project }: { project: ProjectResponse }) {
 
   return (
     <div className="space-y-8 max-w-2xl">
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 mb-5">General Settings</h2>
+      <div className="glass-panel rounded-2xl border border-white/10 p-8 shadow-[0_0_20px_rgba(0,0,0,0.3)]">
+        <h2 className="text-xl font-bold text-white text-glow-md mb-6">General Settings</h2>
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-5">
             <FormInput name="name" label="Project Name" />
             <FormInput name="description" label="Description" />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Visibility</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Visibility</label>
               <select 
                 {...methods.register('visibility')}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full rounded-xl border border-white/10 bg-[#0A0A0A] px-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500/50 transition-all shadow-inner cursor-pointer"
               >
-                <option value="private">Private (Invite-only)</option>
-                <option value="public">Public (Anyone can see)</option>
+                <option value="private" className="bg-[#1A1A1A]">Private (Invite-only)</option>
+                <option value="public" className="bg-[#1A1A1A]">Public (Anyone can see)</option>
               </select>
             </div>
             <div className="pt-2 flex justify-end">
@@ -68,9 +68,10 @@ export function ProjectSettingsTab({ project }: { project: ProjectResponse }) {
         </FormProvider>
       </div>
 
-      <div className="bg-red-50 rounded-xl border border-red-200 p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-red-900 mb-2">Danger Zone</h2>
-        <p className="text-sm text-red-700 mb-4">
+      <div className="glass-panel rounded-2xl border border-red-500/20 bg-red-500/5 p-8 shadow-[0_0_20px_rgba(239,68,68,0.1)] relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-transparent opacity-50" />
+        <h2 className="text-xl font-bold text-red-400 text-glow-md mb-3">Danger Zone</h2>
+        <p className="text-sm text-red-400/70 mb-6">
           Once you delete a project, there is no going back. Please be certain.
         </p>
         <Button 

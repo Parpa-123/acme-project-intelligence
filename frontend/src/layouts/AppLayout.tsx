@@ -1,12 +1,10 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { signOut } from 'supertokens-auth-react/recipe/session';
-import { FaProjectDiagram, FaHome, FaCog, FaSignOutAlt, FaBars } from 'react-icons/fa';
-import { useUIStore } from '../store/uiStore';
+import { FaProjectDiagram, FaHome, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { useCurrentUser } from '../api/user';
 import { DropdownMenu, DropdownMenuItem } from '../components/ui/DropdownMenu';
 
 export function AppLayout() {
-  const { isSidebarOpen, toggleSidebar } = useUIStore();
   const location = useLocation();
   const { data: user } = useCurrentUser();
 
@@ -16,90 +14,111 @@ export function AppLayout() {
   };
 
   const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: <FaHome /> },
-    { name: 'Projects', href: '/projects', icon: <FaProjectDiagram /> },
+    { name: 'Dashboard', href: '/dashboard', icon: <FaHome className="w-5 h-5" /> },
+    { name: 'Projects', href: '/projects', icon: <FaProjectDiagram className="w-5 h-5" /> },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex font-sans">
-      {/* Sidebar */}
-      <aside
-        className={`bg-white border-r border-gray-200 transition-all duration-300 flex flex-col ${
-          isSidebarOpen ? 'w-64' : 'w-16'
-        }`}
-      >
-        <div className="h-14 flex items-center justify-between px-4 border-b border-gray-200">
-          {isSidebarOpen && <span className="font-semibold text-lg text-gray-900 tracking-tight">Acme Co.</span>}
-          <button onClick={toggleSidebar} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-md">
-            <FaBars />
-          </button>
+    <div className="h-screen flex flex-col md:flex-row font-sans overflow-hidden bg-transparent">
+      
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex flex-col w-20 lg:w-64 glass-panel border-r border-white/10 z-20">
+        <div className="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-white/10">
+          <span className="font-bold text-xl text-white tracking-tight text-glow-md hidden lg:block">Acme Co.</span>
+          <span className="font-bold text-xl text-white tracking-tight text-glow-md lg:hidden">A</span>
         </div>
-
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname.startsWith(item.href);
             return (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center justify-center lg:justify-start px-3 py-3 rounded-xl transition-all duration-300 ${
                   isActive 
-                    ? 'bg-gray-100 text-gray-900' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-white/10 text-white text-glow-sm shadow-[0_0_15px_rgba(255,255,255,0.1)]' 
+                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
                 }`}
-                title={!isSidebarOpen ? item.name : undefined}
+                title={item.name}
               >
-                <span className="text-gray-400 mr-3 text-base">{item.icon}</span>
-                {isSidebarOpen && item.name}
+                <span>{item.icon}</span>
+                <span className="hidden lg:block ml-3 font-medium text-sm">{item.name}</span>
               </Link>
             );
           })}
         </nav>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 relative z-10">
+        
         {/* Top Header */}
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-          <div className="flex items-center text-sm text-gray-500">
-            {/* Breadcrumbs can go here in the future */}
+        <header className="h-16 glass-panel border-b border-white/10 flex items-center justify-between px-4 md:px-8 z-20">
+          <div className="flex items-center md:hidden">
+            <span className="font-bold text-lg text-white tracking-tight text-glow-sm">Acme Co.</span>
+          </div>
+          <div className="hidden md:flex items-center text-sm text-gray-400">
+            {/* Desktop breadcrumbs can go here */}
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 ml-auto">
             <DropdownMenu
               trigger={
-                <button className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none">
+                <button className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none ring-2 ring-white/10 rounded-full p-0.5">
                   {user?.avatar_url ? (
-                    <img src={user.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full border border-gray-200 object-cover" referrerPolicy="no-referrer" />
+                    <img src={user.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-white text-sm font-medium shadow-sm">
+                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-semibold shadow-[0_0_10px_rgba(99,102,241,0.5)]">
                       {user?.email.charAt(0).toUpperCase()}
                     </div>
                   )}
                 </button>
               }
             >
-              <div className="px-4 py-3 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900 truncate">{user?.full_name || 'User'}</p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              <div className="px-4 py-3 border-b border-white/10 bg-[#1A1A1A]">
+                <p className="text-sm font-medium text-white truncate text-glow-sm">{user?.full_name || 'User'}</p>
+                <p className="text-xs text-gray-400 truncate">{user?.email}</p>
               </div>
-              <DropdownMenuItem icon={<FaCog />} onClick={() => window.location.href = '/settings'}>
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem icon={<FaSignOutAlt />} onClick={handleLogout} destructive>
-                Sign out
-              </DropdownMenuItem>
+              <div className="bg-[#1A1A1A] p-1">
+                <DropdownMenuItem icon={<FaCog />} onClick={() => window.location.href = '/settings'}>
+                  <span className="text-gray-200">Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem icon={<FaSignOutAlt />} onClick={handleLogout} destructive>
+                  <span className="text-red-400">Sign out</span>
+                </DropdownMenuItem>
+              </div>
             </DropdownMenu>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          <div className="max-w-6xl mx-auto">
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto pb-24 md:pb-8">
+          <div className="max-w-6xl mx-auto h-full">
             <Outlet />
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass-panel border-t border-white/10 pb-safe z-30">
+        <div className="flex items-center justify-around h-16 px-2">
+          {navItems.map((item) => {
+            const isActive = location.pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all ${
+                  isActive ? 'text-white text-glow-sm' : 'text-gray-500'
+                }`}
+              >
+                <span className={isActive ? 'scale-110 transition-transform' : ''}>{item.icon}</span>
+                <span className="text-[10px] font-medium">{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

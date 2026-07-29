@@ -50,8 +50,10 @@ export function MeetingRoom() {
       audio={initialAudio}
       token={token}
       serverUrl={url}
-      className="h-screen w-screen bg-gray-950 flex flex-col overflow-hidden"
+      className="h-screen w-screen bg-[#050505] flex flex-col overflow-hidden relative"
     >
+      {/* Background gradients for depth */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
       <MeetingUI meetingId={meetingId} onLeave={handleDisconnected} />
       <RoomAudioRenderer />
     </LiveKitRoom>
@@ -102,19 +104,19 @@ function MeetingUI({ meetingId, onLeave }: { meetingId: string, onLeave: () => v
     <div className="flex-1 flex flex-col h-full">
       <div className="flex-1 flex overflow-hidden">
         {/* Video Grid */}
-        <div className="flex-1 p-4 flex items-center justify-center min-h-0 bg-gray-950">
-          <div className="w-full h-full grid gap-4" style={{ 
+        <div className="flex-1 p-6 flex items-center justify-center min-h-0 bg-transparent z-10">
+          <div className="w-full h-full grid gap-6" style={{ 
           gridTemplateColumns: `repeat(auto-fit, minmax(300px, 1fr))`,
           gridAutoRows: '1fr'
         }}>
           {tracks.map((trackRef) => (
-            <div key={trackRef.participant.identity + trackRef.source} className="rounded-xl overflow-hidden bg-gray-900 ring-1 ring-gray-800 shadow-xl relative group">
+            <div key={trackRef.participant.identity + trackRef.source} className="rounded-2xl overflow-hidden glass-panel border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.5)] relative group">
               <ParticipantTile 
                 trackRef={trackRef}
                 className="w-full h-full object-cover"
                 style={{ width: '100%', height: '100%' }}
               />
-              <div className="absolute bottom-4 left-4 bg-gray-900/80 backdrop-blur-md px-3 py-1.5 rounded-md text-sm font-medium text-white flex items-center">
+              <div className="absolute bottom-4 left-4 bg-[#0A0A0A]/80 border border-white/10 backdrop-blur-md px-4 py-2 rounded-xl text-sm font-bold text-white flex items-center text-glow-sm shadow-lg">
                 {trackRef.participant.name || trackRef.participant.identity}
               </div>
             </div>
@@ -199,11 +201,11 @@ function CustomControlBar({
   useAudioStreamer(meetingId, isTranscriptionEnabled, sttLanguage, sttMode);
 
   return (
-    <div className="h-24 bg-gray-900 border-t border-gray-800 flex items-center justify-center gap-4 px-6">
+    <div className="h-24 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/10 flex items-center justify-center gap-4 px-6 z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
       <button 
         {...micProps}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-colors ${
-          isMicMuted ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'
+        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
+          isMicMuted ? 'bg-red-500/80 hover:bg-red-500 text-white ring-1 ring-red-500/50' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
         }`}
       >
         {isMicMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
@@ -211,8 +213,8 @@ function CustomControlBar({
 
       <button 
         {...cameraProps}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-colors ${
-          isCameraOff ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'
+        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
+          isCameraOff ? 'bg-red-500/80 hover:bg-red-500 text-white ring-1 ring-red-500/50' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
         }`}
       >
         {isCameraOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
@@ -220,20 +222,20 @@ function CustomControlBar({
 
       <button 
         {...screenShareProps}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-colors ${
-          isScreenShareEnabled ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'
+        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
+          isScreenShareEnabled ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
         }`}
       >
         <MonitorUp className="w-6 h-6" />
       </button>
 
-      <div className="w-px h-10 bg-gray-800 mx-2" />
+      <div className="w-px h-10 bg-white/10 mx-2" />
 
-      <div className="flex items-center bg-gray-800 rounded-full pl-2 pr-4 h-14">
+      <div className="flex items-center glass-panel rounded-full pl-2 pr-4 h-14 border border-white/10">
         <button 
           onClick={() => setIsTranscriptionEnabled(!isTranscriptionEnabled)}
-          className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
-            isTranscriptionEnabled ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'
+          className={`w-10 h-10 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-md ${
+            isTranscriptionEnabled ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-white/10 hover:bg-white/20 text-gray-400 ring-1 ring-white/20'
           }`}
           title={isTranscriptionEnabled ? "Stop AI Transcription" : "Start AI Transcription"}
         >
@@ -244,42 +246,42 @@ function CustomControlBar({
             value={sttMode} 
             onChange={(e) => setSttMode(e.target.value)}
             disabled={isTranscriptionEnabled}
-            className="text-xs bg-gray-900 text-gray-300 rounded border border-gray-700 px-1 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+            className="text-xs bg-black/50 text-gray-300 rounded border border-white/10 px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
           >
-            <option value="transcribe">Transcribe</option>
-            <option value="translate">Translate (EN)</option>
-            <option value="codemix">Codemix</option>
-            <option value="verbatim">Verbatim</option>
-            <option value="translit">Translit</option>
+            <option value="transcribe" className="bg-[#1A1A1A]">Transcribe</option>
+            <option value="translate" className="bg-[#1A1A1A]">Translate (EN)</option>
+            <option value="codemix" className="bg-[#1A1A1A]">Codemix</option>
+            <option value="verbatim" className="bg-[#1A1A1A]">Verbatim</option>
+            <option value="translit" className="bg-[#1A1A1A]">Translit</option>
           </select>
           <select 
             value={sttLanguage} 
             onChange={(e) => setSttLanguage(e.target.value)}
             disabled={isTranscriptionEnabled}
-            className="text-xs bg-gray-900 text-gray-300 rounded border border-gray-700 px-1 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+            className="text-xs bg-black/50 text-gray-300 rounded border border-white/10 px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
           >
-            <option value="en-IN">English (IN)</option>
-            <option value="hi-IN">Hindi</option>
-            <option value="bn-IN">Bengali</option>
-            <option value="kn-IN">Kannada</option>
-            <option value="ml-IN">Malayalam</option>
-            <option value="mr-IN">Marathi</option>
-            <option value="or-IN">Odia</option>
-            <option value="pa-IN">Punjabi</option>
-            <option value="ta-IN">Tamil</option>
-            <option value="te-IN">Telugu</option>
-            <option value="gu-IN">Gujarati</option>
+            <option value="en-IN" className="bg-[#1A1A1A]">English (IN)</option>
+            <option value="hi-IN" className="bg-[#1A1A1A]">Hindi</option>
+            <option value="bn-IN" className="bg-[#1A1A1A]">Bengali</option>
+            <option value="kn-IN" className="bg-[#1A1A1A]">Kannada</option>
+            <option value="ml-IN" className="bg-[#1A1A1A]">Malayalam</option>
+            <option value="mr-IN" className="bg-[#1A1A1A]">Marathi</option>
+            <option value="or-IN" className="bg-[#1A1A1A]">Odia</option>
+            <option value="pa-IN" className="bg-[#1A1A1A]">Punjabi</option>
+            <option value="ta-IN" className="bg-[#1A1A1A]">Tamil</option>
+            <option value="te-IN" className="bg-[#1A1A1A]">Telugu</option>
+            <option value="gu-IN" className="bg-[#1A1A1A]">Gujarati</option>
           </select>
         </div>
       </div>
 
-      <div className="w-px h-10 bg-gray-800 mx-2" />
+      <div className="w-px h-10 bg-white/10 mx-2" />
 
       {/* Participants Toggle */}
       <button 
         onClick={() => toggleSidebar('participants')}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-colors ${
-          isSidebarOpen && activeTab === 'participants' ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'
+        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
+          isSidebarOpen && activeTab === 'participants' ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
         }`}
         title="Participants"
       >
@@ -289,8 +291,8 @@ function CustomControlBar({
       {/* Chat Toggle */}
       <button 
         onClick={() => toggleSidebar('chat')}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-colors ${
-          isSidebarOpen && activeTab === 'chat' ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'
+        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
+          isSidebarOpen && activeTab === 'chat' ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
         }`}
         title="Chat"
       >
@@ -300,20 +302,20 @@ function CustomControlBar({
       {/* Transcript Toggle */}
       <button 
         onClick={() => toggleSidebar('transcript')}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-colors ${
-          isSidebarOpen && activeTab === 'transcript' ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'
+        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
+          isSidebarOpen && activeTab === 'transcript' ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
         }`}
         title="Transcript"
       >
         <FileText className="w-6 h-6" />
       </button>
 
-      <div className="w-px h-10 bg-gray-800 mx-2" />
+      <div className="w-px h-10 bg-white/10 mx-2" />
 
       <button 
         {...disconnectProps}
         onClick={handleDisconnect}
-        className="w-14 h-14 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors"
+        className="w-14 h-14 flex items-center justify-center rounded-full bg-red-500/80 hover:bg-red-500 text-white transition-all cursor-pointer shadow-[0_0_20px_rgba(239,68,68,0.4)] ring-1 ring-red-500/50"
       >
         <PhoneOff className="w-6 h-6" />
       </button>

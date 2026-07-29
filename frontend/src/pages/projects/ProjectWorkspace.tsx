@@ -18,8 +18,8 @@ export function ProjectWorkspace() {
   const [activeTab, setActiveTab] = useState<'overview' | 'knowledge' | 'members' | 'meetings' | 'settings'>('overview');
 
   if (isNaN(projectId)) return <Navigate to="/projects" replace />;
-  if (isLoading) return <div className="animate-pulse text-gray-500">Loading workspace...</div>;
-  if (error || !dashboard) return <div className="text-red-500">Project not found or you don't have access.</div>;
+  if (isLoading) return <div className="animate-pulse text-gray-400 text-glow-sm">Loading workspace...</div>;
+  if (error || !dashboard) return <div className="text-red-400 text-glow-sm">Project not found or you don't have access.</div>;
 
   const { project, total_members, pending_invitations_count, current_user_role } = dashboard;
   
@@ -31,30 +31,31 @@ export function ProjectWorkspace() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-4">
+      <div className="glass-panel rounded-2xl p-6 shadow-lg flex flex-col md:flex-row md:items-start justify-between gap-6">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{project.name}</h1>
+          <div className="flex flex-wrap items-center gap-3 mb-2">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight text-glow-md">{project.name}</h1>
             <Badge variant={project.visibility === 'public' ? 'secondary' : 'outline'}>{project.visibility}</Badge>
             {userRole && <Badge variant="default" className="capitalize">{userRole}</Badge>}
           </div>
-          <p className="text-gray-500 text-sm max-w-2xl">{project.description || 'No description provided.'}</p>
+          <p className="text-gray-400 text-sm max-w-2xl mt-2">{project.description || 'No description provided.'}</p>
         </div>
-        <div className="flex items-center gap-6 text-sm">
-          <div className="flex flex-col items-end">
-            <span className="text-gray-400 font-medium flex items-center gap-1.5"><FaUsers /> Members</span>
-            <span className="font-semibold text-gray-900">{total_members}</span>
+        <div className="flex items-center gap-6 text-sm bg-white/5 px-4 py-3 rounded-xl border border-white/10">
+          <div className="flex flex-col items-center md:items-end">
+            <span className="text-gray-400 font-medium flex items-center gap-1.5"><FaUsers className="text-indigo-400" /> Members</span>
+            <span className="font-bold text-white text-glow-sm mt-1">{total_members}</span>
           </div>
-          <div className="flex flex-col items-end">
-            <span className="text-gray-400 font-medium flex items-center gap-1.5"><FaEnvelope /> Pending</span>
-            <span className="font-semibold text-gray-900">{pending_invitations_count}</span>
+          <div className="w-px h-8 bg-white/10" />
+          <div className="flex flex-col items-center md:items-end">
+            <span className="text-gray-400 font-medium flex items-center gap-1.5"><FaEnvelope className="text-emerald-400" /> Pending</span>
+            <span className="font-bold text-white text-glow-sm mt-1">{pending_invitations_count}</span>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-white/10 overflow-x-auto no-scrollbar">
+        <nav className="-mb-px flex space-x-8 min-w-max">
           {(['overview', 'knowledge', 'members', 'meetings', 'settings'] as const).map((tab) => {
             // Hide settings tab if not admin
             if (tab === 'settings' && !isAdmin) return null;
@@ -64,16 +65,16 @@ export function ProjectWorkspace() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`
-                  whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors capitalize
+                  whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all capitalize flex items-center
                   ${activeTab === tab
-                    ? 'border-gray-900 text-gray-900'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-indigo-400 text-white text-glow-sm'
+                    : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-white/20'
                   }
                 `}
               >
-                {tab === 'settings' && <FaCog className="inline mr-2 mb-0.5" />}
-                {tab === 'meetings' && <FaCalendar className="inline mr-2 mb-0.5" />}
-                {tab === 'knowledge' && <FaBook className="inline mr-2 mb-0.5" />}
+                {tab === 'settings' && <FaCog className="mr-2" />}
+                {tab === 'meetings' && <FaCalendar className="mr-2" />}
+                {tab === 'knowledge' && <FaBook className="mr-2" />}
                 {tab}
               </button>
             );
@@ -82,22 +83,22 @@ export function ProjectWorkspace() {
       </div>
 
       {/* Tab Content */}
-      <div className="py-2">
+      <div className="py-4">
         {activeTab === 'overview' && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Workspace Activity</h2>
-            <div className="text-sm text-gray-500">
+          <div className="glass-panel rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-white text-glow-sm mb-4">Workspace Activity</h2>
+            <div className="text-sm text-gray-400">
               <p>Project created on {new Date(project.created_at).toLocaleDateString()}</p>
-              <div className="mt-8 border border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
+              <div className="mt-8 border border-dashed border-white/20 rounded-xl p-8 text-center bg-white/5 backdrop-blur-md">
                 <p>Welcome to your project workspace.</p>
-                <p className="text-xs text-gray-400 mt-2">More dashboard features coming soon.</p>
+                <p className="text-xs text-gray-500 mt-2">More dashboard features coming soon.</p>
               </div>
             </div>
           </div>
         )}
 
         {activeTab === 'knowledge' && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div className="glass-panel rounded-2xl p-6 shadow-sm">
             <ProjectKnowledgeTab projectId={projectId} />
           </div>
         )}

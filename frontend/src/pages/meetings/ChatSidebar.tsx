@@ -78,16 +78,16 @@ export function ChatSidebar({ meetingId, onClose }: { meetingId: string; onClose
   };
 
   return (
-    <div className="w-80 h-full bg-white flex flex-col flex-shrink-0 z-10 border-l border-gray-200">
-      <div className="h-[60px] flex-shrink-0 border-b border-gray-200 flex items-center justify-between px-4 bg-white text-gray-900">
-        <h3 className="font-semibold flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-indigo-600" />
+    <div className="w-80 h-full bg-[#0A0A0A] flex flex-col flex-shrink-0 z-10 border-l border-white/10">
+      <div className="h-[60px] flex-shrink-0 border-b border-white/10 flex items-center justify-between px-4 glass-panel text-white">
+        <h3 className="font-bold flex items-center gap-2 text-glow-sm">
+          <MessageSquare className="w-4 h-4 text-indigo-400" />
           Chat
         </h3>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-medium leading-none">&times;</button>
+        <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl font-medium leading-none cursor-pointer">&times;</button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-transparent no-scrollbar">
         {isLoading ? (
           <div className="text-center text-gray-400 text-sm mt-4 animate-pulse">Loading history...</div>
         ) : messages.length === 0 ? (
@@ -103,8 +103,8 @@ export function ChatSidebar({ meetingId, onClose }: { meetingId: string; onClose
                 <div 
                   className={`px-3 py-2 rounded-2xl max-w-[90%] text-[13px] shadow-sm leading-relaxed
                     ${isMe 
-                      ? 'bg-indigo-600 text-white rounded-tr-sm' 
-                      : 'bg-white text-gray-800 border border-gray-200 rounded-tl-sm'
+                      ? 'bg-indigo-500/20 text-indigo-300 rounded-tr-sm ring-1 ring-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.1)]' 
+                      : 'bg-white/10 text-gray-200 border border-white/10 rounded-tl-sm'
                     }`
                   }
                 >
@@ -117,7 +117,7 @@ export function ChatSidebar({ meetingId, onClose }: { meetingId: string; onClose
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-white border-t border-gray-200 flex-shrink-0 h-[72px]">
+      <div className="p-4 glass-panel border-t border-white/10 flex-shrink-0 h-[72px]">
         <form onSubmit={handleSend} className="relative h-full">
           <input
             type="text"
@@ -125,12 +125,12 @@ export function ChatSidebar({ meetingId, onClose }: { meetingId: string; onClose
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Type a message..."
             disabled={sendMessageToDb.isPending}
-            className="w-full h-10 pl-4 pr-10 bg-gray-100 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-full text-sm transition-all outline-none"
+            className="w-full h-10 pl-4 pr-10 bg-white/5 border border-white/10 focus:bg-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-full text-sm text-white transition-all outline-none placeholder-gray-500 shadow-inner"
           />
           <button 
             type="submit" 
             disabled={!inputText.trim() || sendMessageToDb.isPending}
-            className="absolute right-1 top-1 bottom-1 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="absolute right-1 top-1 bottom-1 w-8 h-8 flex items-center justify-center bg-indigo-500/20 text-indigo-300 rounded-full hover:bg-indigo-500/40 hover:text-white ring-1 ring-indigo-500/30 disabled:opacity-50 transition-all cursor-pointer"
           >
             <Send className="w-4 h-4 ml-[-2px]" />
           </button>

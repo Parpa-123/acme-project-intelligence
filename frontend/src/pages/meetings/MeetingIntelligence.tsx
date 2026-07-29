@@ -39,8 +39,8 @@ export function MeetingIntelligence() {
     const el = document.getElementById(`chunk-${chunkId}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.classList.add('bg-yellow-100');
-      setTimeout(() => el.classList.remove('bg-yellow-100'), 2000);
+      el.classList.add('bg-indigo-500/20', 'border-indigo-500/50');
+      setTimeout(() => el.classList.remove('bg-indigo-500/20', 'border-indigo-500/50'), 2000);
     }
   };
 
@@ -48,10 +48,10 @@ export function MeetingIntelligence() {
   const isProcessing = enrichmentStatus && enrichmentStatus !== 'completed' && enrichmentStatus !== 'failed';
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-transparent">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Meeting Intelligence</h1>
+      <div className="glass-panel border-b border-white/10 px-6 py-4 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-white text-glow-sm">Meeting Intelligence</h1>
         
         {/* Pipeline Status Bar */}
         <div className="flex items-center space-x-6">
@@ -61,22 +61,22 @@ export function MeetingIntelligence() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden flex">
+      <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
         {/* Left Pane: Transcript */}
-        <div className="w-1/3 border-r border-gray-200 bg-white overflow-y-auto p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Transcript Timeline</h2>
+        <div className="w-full md:w-1/3 border-r border-white/10 bg-white/5 backdrop-blur-md overflow-y-auto p-6">
+          <h2 className="text-lg font-bold text-white text-glow-sm mb-4">Transcript Timeline</h2>
           <div className="space-y-6">
             {chunks?.map((chunk) => (
               <div 
                 key={chunk.id} 
                 id={`chunk-${chunk.id}`}
-                className="p-4 rounded-lg bg-gray-50 transition-colors duration-500 border border-transparent"
+                className="p-4 rounded-xl glass-panel shadow-[0_0_15px_rgba(0,0,0,0.2)] border border-white/10 hover:border-indigo-500/30 transition-colors duration-500 hover:-translate-y-0.5"
               >
-                <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                  <span className="font-medium text-indigo-600">{chunk.participants.join(', ')}</span>
+                <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+                  <span className="font-bold text-indigo-400">{chunk.participants.join(', ')}</span>
                   <span>{new Date(chunk.start_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
-                <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
                   {chunk.text}
                 </p>
               </div>
@@ -85,19 +85,19 @@ export function MeetingIntelligence() {
         </div>
 
         {/* Right Pane: Intelligence */}
-        <div className="w-2/3 flex flex-col bg-gray-50 overflow-hidden">
+        <div className="w-full md:w-2/3 flex flex-col bg-transparent overflow-hidden">
           {/* Tabs */}
-          <div className="bg-white border-b border-gray-200 px-6 pt-2">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          <div className="glass-panel border-b border-white/10 px-6 pt-2 overflow-x-auto no-scrollbar">
+            <nav className="-mb-px flex space-x-8 min-w-max" aria-label="Tabs">
               {tabs.map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`
-                    whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm
+                    whitespace-nowrap pb-4 px-1 border-b-2 font-bold text-sm transition-all
                     ${activeTab === tab 
-                      ? 'border-indigo-500 text-indigo-600' 
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-indigo-400 text-white text-glow-sm' 
+                      : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-white/20'
                     }
                   `}
                 >
@@ -110,23 +110,23 @@ export function MeetingIntelligence() {
           {/* Content Area */}
           <div className="flex-1 overflow-y-auto p-6">
             {isProcessing ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                <Loader2 className="h-10 w-10 animate-spin mb-4 text-indigo-500" />
-                <p className="text-lg font-medium text-gray-900">AI is processing this meeting...</p>
-                <p className="text-sm">Generating intelligent insights, summaries, and action items.</p>
+              <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                <Loader2 className="h-10 w-10 animate-spin mb-4 text-indigo-400 drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+                <p className="text-lg font-bold text-white text-glow-md">AI is processing this meeting...</p>
+                <p className="text-sm mt-2 text-gray-300">Generating intelligent insights, summaries, and action items.</p>
               </div>
             ) : (
               <div className="max-w-4xl mx-auto">
                 {enrichmentStatus === 'failed' && (
-                  <div className="mb-6 bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
-                    <h3 className="text-sm font-medium">AI Enrichment Failed</h3>
+                  <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-4 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                    <h3 className="text-sm font-bold text-glow-sm">AI Enrichment Failed</h3>
                     <p className="text-sm mt-1">There was an error generating intelligent insights for this meeting. Please try again later or check system logs.</p>
                   </div>
                 )}
                 {activeTab === 'Summary' && (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Executive Summary</h3>
-                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  <div className="glass-panel rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.3)] border border-white/10 p-8">
+                    <h3 className="text-xl font-bold text-white text-glow-md mb-6">Executive Summary</h3>
+                    <p className="text-gray-300 whitespace-pre-wrap leading-relaxed text-md">
                       {summaryResponse?.summary || "No summary available."}
                     </p>
                   </div>
@@ -143,7 +143,7 @@ export function MeetingIntelligence() {
                         onTrace={handleTrace}
                       />
                     )) : (
-                      <div className="text-center p-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">No action items found in this meeting.</div>
+                      <div className="text-center p-8 text-gray-400 glass-panel rounded-2xl border border-white/10">No action items found in this meeting.</div>
                     )}
                   </div>
                 )}
@@ -159,7 +159,7 @@ export function MeetingIntelligence() {
                         onTrace={handleTrace}
                       />
                     )) : (
-                      <div className="text-center p-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">No decisions were recorded in this meeting.</div>
+                      <div className="text-center p-8 text-gray-400 glass-panel rounded-2xl border border-white/10">No decisions were recorded in this meeting.</div>
                     )}
                   </div>
                 )}
@@ -175,7 +175,7 @@ export function MeetingIntelligence() {
                         onTrace={handleTrace}
                       />
                     )) : (
-                      <div className="text-center p-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">No requirements found in this meeting.</div>
+                      <div className="text-center p-8 text-gray-400 glass-panel rounded-2xl border border-white/10">No requirements found in this meeting.</div>
                     )}
                   </div>
                 )}
@@ -191,7 +191,7 @@ export function MeetingIntelligence() {
                         onTrace={handleTrace}
                       />
                     )) : (
-                      <div className="text-center p-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">No concerns or risks identified.</div>
+                      <div className="text-center p-8 text-gray-400 glass-panel rounded-2xl border border-white/10">No concerns or risks identified.</div>
                     )}
                   </div>
                 )}
@@ -206,7 +206,7 @@ export function MeetingIntelligence() {
                         onTrace={handleTrace}
                       />
                     )) : (
-                      <div className="text-center p-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">No specific topics extracted.</div>
+                      <div className="text-center p-8 text-gray-400 glass-panel rounded-2xl border border-white/10">No specific topics extracted.</div>
                     )}
                   </div>
                 )}
@@ -222,11 +222,11 @@ export function MeetingIntelligence() {
 function StatusStep({ label, status }: { label: string, status: string }) {
   return (
     <div className="flex items-center space-x-2">
-      {status === 'completed' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-      {status === 'processing' && <Loader2 className="h-5 w-5 text-indigo-500 animate-spin" />}
-      {status === 'pending' && <div className="h-5 w-5 rounded-full border-2 border-gray-300" />}
-      {status === 'failed' && <div className="h-5 w-5 rounded-full bg-red-500 text-white flex items-center justify-center font-bold text-xs">!</div>}
-      <span className={`text-sm font-medium ${status === 'completed' ? 'text-gray-900' : 'text-gray-500'}`}>
+      {status === 'completed' && <CheckCircle2 className="h-5 w-5 text-emerald-400" />}
+      {status === 'processing' && <Loader2 className="h-5 w-5 text-indigo-400 animate-spin" />}
+      {status === 'pending' && <div className="h-5 w-5 rounded-full border-2 border-gray-500" />}
+      {status === 'failed' && <div className="h-5 w-5 rounded-full bg-red-500/20 border border-red-500/50 text-red-400 flex items-center justify-center font-bold text-xs">!</div>}
+      <span className={`text-sm font-bold ${status === 'completed' ? 'text-white text-glow-sm' : 'text-gray-500'}`}>
         {label}
       </span>
     </div>
@@ -237,18 +237,18 @@ function IntelligenceCard({ title, badge, chunkId, onTrace }: { title: string, b
   return (
     <div 
       onClick={() => onTrace(chunkId)}
-      className="group bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all flex items-start justify-between"
+      className="group glass-panel rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.2)] border border-white/10 p-5 cursor-pointer hover:border-indigo-400/50 hover:shadow-[0_0_30px_rgba(99,102,241,0.15)] transition-all flex items-start justify-between hover:-translate-y-1"
     >
       <div>
-        <p className="text-gray-900 font-medium">{title}</p>
+        <p className="text-white font-bold text-glow-sm group-hover:text-indigo-300 transition-colors">{title}</p>
         {badge && (
-          <span className="inline-flex items-center mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          <span className="inline-flex items-center mt-3 px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/10 text-gray-300 ring-1 ring-white/20">
             {badge}
           </span>
         )}
       </div>
-      <div className="text-gray-400 group-hover:text-indigo-500 transition-colors opacity-0 group-hover:opacity-100 flex items-center space-x-1 text-sm">
-        <span>View transcript</span>
+      <div className="text-gray-500 group-hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100 flex items-center space-x-1 text-sm mt-1">
+        <span className="font-bold">View transcript</span>
         <ArrowRight className="h-4 w-4" />
       </div>
     </div>

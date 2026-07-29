@@ -77,32 +77,32 @@ export function ProjectMembersTab({
   return (
     <div className="space-y-8">
       {/* Active Members */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-          <h2 className="text-lg font-semibold text-gray-900">Active Members</h2>
+      <div className="glass-panel rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.3)] overflow-hidden border border-white/10">
+        <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-[#0A0A0A]">
+          <h2 className="text-xl font-bold text-white text-glow-md">Active Members</h2>
           {isAdmin && (
             <Button size="sm" onClick={() => setInviteModalOpen(true)}>
               <FaUserPlus className="mr-2 h-3.5 w-3.5" /> Invite
             </Button>
           )}
         </div>
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-white/10">
           {members?.map((member) => (
-            <li key={member.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+            <li key={member.id} className="p-6 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer group">
               <div className="flex items-center gap-4">
                 {member.user?.avatar_url ? (
-                  <img src={member.user.avatar_url} alt="" className="w-10 h-10 rounded-full bg-gray-100 object-cover" referrerPolicy="no-referrer" />
+                  <img src={member.user.avatar_url} alt="" className="w-12 h-12 rounded-full bg-white/5 object-cover ring-1 ring-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)] group-hover:ring-white/40 transition-all" referrerPolicy="no-referrer" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center font-medium">
+                  <div className="w-12 h-12 rounded-full bg-white/5 text-white flex items-center justify-center font-bold text-lg ring-1 ring-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)] group-hover:ring-white/40 transition-all">
                     {member.user?.email.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-bold text-white text-glow-sm">
                     {member.user?.full_name || (member.user?.email ? member.user.email.split('@')[0] : 'Unknown User')}
-                    {member.user_id === currentUserId && <span className="ml-2 text-xs text-gray-400 font-normal">(You)</span>}
+                    {member.user_id === currentUserId && <span className="ml-2 text-xs text-indigo-400 font-normal">(You)</span>}
                   </p>
-                  <p className="text-xs text-gray-500">{member.user?.email}</p>
+                  <p className="text-xs text-gray-400">{member.user?.email}</p>
                 </div>
               </div>
               
@@ -115,8 +115,8 @@ export function ProjectMembersTab({
                 {isOwner && member.user_id !== currentUserId && (
                   <DropdownMenu
                     trigger={
-                      <button className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-md transition-colors">
-                        <FaEllipsisV className="w-3.5 h-3.5" />
+                      <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer">
+                        <FaEllipsisV className="w-4 h-4" />
                       </button>
                     }
                   >
@@ -133,25 +133,25 @@ export function ProjectMembersTab({
 
       {/* Pending Invitations */}
       {isAdmin && invitations && invitations.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-lg font-semibold text-gray-900">Pending Invitations</h2>
+        <div className="glass-panel rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.3)] overflow-hidden border border-white/10 mt-8">
+          <div className="px-6 py-5 border-b border-white/10 bg-[#0A0A0A]">
+            <h2 className="text-xl font-bold text-white text-glow-md">Pending Invitations</h2>
           </div>
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-white/10">
             {invitations.map((inv) => (
               <li key={inv.id} className="p-6 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{inv.email}</p>
-                  <p className="text-xs text-gray-500">Sent on {new Date(inv.created_at).toLocaleDateString()}</p>
+                  <p className="text-sm font-bold text-white text-glow-sm">{inv.email}</p>
+                  <p className="text-xs text-gray-400">Sent on {new Date(inv.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge variant="warning">Pending</Badge>
                   <button 
                     onClick={() => deleteInvite.mutate(inv.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
                     title="Revoke Invite"
                   >
-                    <FaTrash className="w-3.5 h-3.5" />
+                    <FaTrash className="w-4 h-4" />
                   </button>
                 </div>
               </li>

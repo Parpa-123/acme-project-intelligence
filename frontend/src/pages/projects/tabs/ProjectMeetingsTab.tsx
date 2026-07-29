@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useMeetingSpaces, useCreateMeetingSpace } from '../../../api/meetings';
-import { Video, Plus, Loader2 } from 'lucide-react';
+import { Video, Plus } from 'lucide-react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from '../../../components/forms/FormInput';
+import { Button } from '../../../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 
 const createSpaceSchema = z.object({
@@ -19,13 +20,13 @@ type CreateSpaceFormValues = z.infer<typeof createSpaceSchema>;
 function SpaceCard({ space, handleJoin }: { space: MeetingSpaceListResponse, handleJoin: (id: string) => void }) {
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col">
+    <div className="glass-panel p-6 rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.15)] transition-all flex flex-col h-full border border-white/10 hover:border-indigo-500/30 group cursor-pointer hover:-translate-y-1">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-indigo-50 rounded-lg">
-            <Video className="h-5 w-5 text-indigo-600" />
+          <div className="p-2 bg-indigo-500/20 rounded-xl ring-1 ring-indigo-500/30">
+            <Video className="h-5 w-5 text-indigo-400 group-hover:scale-110 transition-transform" />
           </div>
-          <h3 className="text-md font-semibold text-gray-900">{space.name}</h3>
+          <h3 className="text-md font-bold text-white text-glow-sm">{space.name}</h3>
         </div>
         {space.active_session && (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
@@ -37,13 +38,13 @@ function SpaceCard({ space, handleJoin }: { space: MeetingSpaceListResponse, han
       
       {/* History moved to Knowledge Tab */}
 
-      <div className="mt-auto pt-4">
-        <button
+      <div className="mt-auto pt-6">
+        <Button
           onClick={() => handleJoin(space.id)}
-          className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="w-full"
         >
           Join Meeting
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -86,21 +87,18 @@ export function ProjectMeetingsTab({ projectId }: { projectId: number }) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Meeting Spaces</h2>
-          <p className="text-sm text-gray-500">Persistent video conferencing rooms for your team.</p>
+          <h2 className="text-xl font-bold text-white text-glow-sm">Meeting Spaces</h2>
+          <p className="text-sm text-gray-400 mt-1">Persistent video conferencing rooms for your team.</p>
         </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center space-x-2 text-sm font-medium transition-colors"
-        >
-          <Plus className="h-4 w-4" />
+        <Button onClick={() => setIsCreating(true)}>
+          <Plus className="h-4 w-4 mr-2" />
           <span>New Space</span>
-        </button>
+        </Button>
       </div>
 
       {isCreating && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-md font-medium text-gray-900 mb-4">Create New Meeting Space</h3>
+        <div className="glass-panel p-8 rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.3)] border border-white/10">
+          <h3 className="text-xl font-bold text-white text-glow-md mb-6">Create New Meeting Space</h3>
           <FormProvider {...methods}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <FormInput
@@ -113,24 +111,20 @@ export function ProjectMeetingsTab({ projectId }: { projectId: number }) {
                 label="Description (Optional)"
                 placeholder="What is this space for?"
               />
-              <div className="flex justify-end space-x-3 pt-2">
-                <button
+              <div className="flex justify-end space-x-3 pt-4 mt-4 border-t border-white/10">
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setIsCreating(false)}
-                  className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  disabled={isSubmitting || createSpace.isPending}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 flex items-center"
+                  isLoading={isSubmitting || createSpace.isPending}
                 >
-                  {(isSubmitting || createSpace.isPending) ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
                   Create Space
-                </button>
+                </Button>
               </div>
             </form>
           </FormProvider>
@@ -138,10 +132,12 @@ export function ProjectMeetingsTab({ projectId }: { projectId: number }) {
       )}
 
       {spaces?.length === 0 && !isCreating ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-dashed border-gray-300">
-          <Video className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No meeting spaces</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by creating a new persistent meeting room.</p>
+        <div className="text-center py-12 glass-panel rounded-2xl border border-dashed border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.3)]">
+          <div className="mx-auto h-16 w-16 bg-white/5 rounded-full flex items-center justify-center ring-1 ring-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)] mb-4">
+            <Video className="h-8 w-8 text-gray-500" />
+          </div>
+          <h3 className="text-xl font-bold text-white text-glow-md">No meeting spaces</h3>
+          <p className="mt-2 text-sm text-gray-400">Get started by creating a new persistent meeting room.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
