@@ -2,37 +2,44 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   useMeetingProcessingStatus,
-  useMeetingKnowledge,
-  useMeetingSummary,
-  useMeetingActionItems,
-  useMeetingDecisions,
-  useMeetingRequirements,
-  useMeetingConcerns,
-  useMeetingTopics
 } from '../../api/meetings';
-import type { 
-  MeetingActionItemResponse, 
-  MeetingDecisionResponse, 
-  MeetingRequirementResponse, 
-  MeetingConcernResponse, 
-  MeetingTopicResponse 
-} from '../../types';
+import {
+  useKnowledgeChunks,
+  useKnowledgeArtifacts
+} from '../../api/knowledgeApi';
+import type {
+  Decision,
+  ActionItem,
+  Requirement,
+  Concern,
+  Topic,
+  Summary
+} from '../../api/knowledgeApi';
 import { CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 
 const tabs = ['Summary', 'Action Items', 'Decisions', 'Requirements', 'Concerns', 'Topics'];
 
 export function MeetingIntelligence() {
-  const { meetingId } = useParams<{ meetingId: string }>();
+  const { meetingId, projectId } = useParams<{ meetingId: string, projectId: string }>();
   const [activeTab, setActiveTab] = useState('Summary');
+  const projIdNum = Number(projectId);
 
   const { data: status } = useMeetingProcessingStatus(meetingId);
-  const { data: chunks } = useMeetingKnowledge(meetingId);
-  const { data: summaryResponse } = useMeetingSummary(meetingId);
-  const { data: actionItems } = useMeetingActionItems(meetingId);
-  const { data: decisions } = useMeetingDecisions(meetingId);
-  const { data: requirements } = useMeetingRequirements(meetingId);
-  const { data: concerns } = useMeetingConcerns(meetingId);
-  const { data: topics } = useMeetingTopics(meetingId);
+  const { data: chunksRes } = useKnowledgeChunks(projIdNum, meetingId);
+  const { data: summaryRes } = useKnowledgeArtifacts<Summary>(projIdNum, 'summaries', meetingId);
+  const { data: actionItemsRes } = useKnowledgeArtifacts<ActionItem>(projIdNum, 'action-items', meetingId);
+  const { data: decisionsRes } = useKnowledgeArtifacts<Decision>(projIdNum, 'decisions', meetingId);
+  const { data: requirementsRes } = useKnowledgeArtifacts<Requirement>(projIdNum, 'requirements', meetingId);
+  const { data: concernsRes } = useKnowledgeArtifacts<Concern>(projIdNum, 'concerns', meetingId);
+  const { data: topicsRes } = useKnowledgeArtifacts<Topic>(projIdNum, 'topics', meetingId);
+
+  const chunks = chunksRes?.items;
+  const summaryResponse = summaryRes?.items?.[0];
+  const actionItems = actionItemsRes?.items;
+  const decisions = decisionsRes?.items;
+  const requirements = requirementsRes?.items;
+  const concerns = concernsRes?.items;
+  const topics = topicsRes?.items;
 
   // Trace mechanism
   const handleTrace = (chunkId: string) => {
@@ -73,7 +80,7 @@ export function MeetingIntelligence() {
                 className="p-4 rounded-xl glass-panel shadow-[0_0_15px_rgba(0,0,0,0.2)] border border-white/10 hover:border-indigo-500/30 transition-colors duration-500 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
-                  <span className="font-bold text-indigo-400">{chunk.participants.join(', ')}</span>
+                  <span className="font-bold text-indigo-400">{chunk.participant_ids.length} Participants</span>
                   <span>{new Date(chunk.start_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
@@ -134,12 +141,12 @@ export function MeetingIntelligence() {
                 
                 {activeTab === 'Action Items' && (
                   <div className="space-y-4">
-                    {actionItems && actionItems.length > 0 ? actionItems.map((item: MeetingActionItemResponse) => (
+                    {actionItems && actionItems.length > 0 ? actionItems.map((item) => (
                       <IntelligenceCard 
                         key={item.id} 
                         title={item.description}
                         badge={item.assignee}
-                        chunkId={item.knowledge_chunk_id}
+                        chunkId={item.knowledge_chunk_id || ''}
                         onTrace={handleTrace}
                       />
                     )) : (
@@ -150,12 +157,12 @@ export function MeetingIntelligence() {
                 
                 {activeTab === 'Decisions' && (
                   <div className="space-y-4">
-                    {decisions && decisions.length > 0 ? decisions.map((item: MeetingDecisionResponse) => (
+                    {decisions && decisions.length > 0 ? decisions.map((item) => (
                       <IntelligenceCard 
                         key={item.id} 
                         title={item.decision}
                         badge={`Confidence: ${item.confidence}`}
-                        chunkId={item.knowledge_chunk_id}
+                        chunkId={item.knowledge_chunk_id || ''}
                         onTrace={handleTrace}
                       />
                     )) : (
@@ -166,12 +173,12 @@ export function MeetingIntelligence() {
                 
                 {activeTab === 'Requirements' && (
                   <div className="space-y-4">
-                    {requirements && requirements.length > 0 ? requirements.map((item: MeetingRequirementResponse) => (
+                    {requirements && requirements.length > 0 ? requirements.map((item) => (
                       <IntelligenceCard 
                         key={item.id} 
                         title={item.requirement}
                         badge={`Priority: ${item.priority}`}
-                        chunkId={item.knowledge_chunk_id}
+                        chunkId={item.knowledge_chunk_id || ''}
                         onTrace={handleTrace}
                       />
                     )) : (
@@ -182,12 +189,12 @@ export function MeetingIntelligence() {
                 
                 {activeTab === 'Concerns' && (
                   <div className="space-y-4">
-                    {concerns && concerns.length > 0 ? concerns.map((item: MeetingConcernResponse) => (
+                    {concerns && concerns.length > 0 ? concerns.map((item) => (
                       <IntelligenceCard 
                         key={item.id} 
                         title={item.concern}
                         badge={`Severity: ${item.severity}`}
-                        chunkId={item.knowledge_chunk_id}
+                        chunkId={item.knowledge_chunk_id || ''}
                         onTrace={handleTrace}
                       />
                     )) : (
@@ -198,11 +205,11 @@ export function MeetingIntelligence() {
                 
                 {activeTab === 'Topics' && (
                   <div className="space-y-4">
-                    {topics && topics.length > 0 ? topics.map((item: MeetingTopicResponse) => (
+                    {topics && topics.length > 0 ? topics.map((item) => (
                       <IntelligenceCard 
                         key={item.id} 
                         title={item.topic}
-                        chunkId={item.knowledge_chunk_id}
+                        chunkId={item.knowledge_chunk_id || ''}
                         onTrace={handleTrace}
                       />
                     )) : (

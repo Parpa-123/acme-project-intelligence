@@ -117,13 +117,13 @@ from src.meeting.router import session_router
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.retrieval.router import router as retrieval_router
 from src.ai_chat.router import router as ai_chat_router
+from src.knowledge.router import router as knowledge_router
 
 app.include_router(projects_router)
 app.include_router(invitations_router)
 app.include_router(meetings_router)
 app.include_router(spaces_router)
 app.include_router(session_router)
-app.include_router(retrieval_router)
 app.include_router(ai_chat_router)
+app.include_router(knowledge_router)

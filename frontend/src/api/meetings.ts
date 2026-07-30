@@ -1,19 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetcher } from './client';
-import type { 
-  MeetingSpaceListResponse, 
+import type {
+  MeetingSpaceListResponse,
   MeetingSpaceDetailResponse,
   MeetingSpaceCreateResponse,
   MeetingJoinResponse,
   MeetingHistoryResponse,
-  MeetingSummaryResponse,
-  MeetingDecisionResponse,
-  MeetingActionItemResponse,
-  MeetingRequirementResponse,
-  MeetingConcernResponse,
-  MeetingTopicResponse,
-  MeetingTranscriptResponse,
-  KnowledgeChunkResponse
+  MeetingTranscriptResponse
 } from '../types';
 
 export const useMeetingSpaces = (projectId: number) => {
@@ -156,58 +149,3 @@ export const useMeetingProcessingStatus = (meetingId: string | undefined) => {
 };
 
 
-export const useMeetingKnowledge = (meetingId: string | undefined) => {
-  return useQuery({
-    queryKey: ['meetings', meetingId, 'knowledge'],
-    queryFn: () => fetcher<KnowledgeChunkResponse[]>(`/meetings/${meetingId}/knowledge`),
-    enabled: !!meetingId,
-  });
-};
-
-export const useMeetingSummary = (meetingId: string | undefined) => {
-  return useQuery({
-    queryKey: ['meetings', meetingId, 'summary'],
-    queryFn: () => fetcher<MeetingSummaryResponse>(`/meetings/${meetingId}/summary`),
-    enabled: !!meetingId,
-  });
-};
-
-export const useMeetingDecisions = (meetingId: string | undefined) => {
-  return useQuery({
-    queryKey: ['meetings', meetingId, 'decisions'],
-    queryFn: () => fetcher<MeetingDecisionResponse[]>(`/meetings/${meetingId}/decisions`),
-    enabled: !!meetingId,
-  });
-};
-
-export const useMeetingActionItems = (meetingId: string | undefined) => {
-  return useQuery({
-    queryKey: ['meetings', meetingId, 'action-items'],
-    queryFn: () => fetcher<MeetingActionItemResponse[]>(`/meetings/${meetingId}/action-items`),
-    enabled: !!meetingId,
-  });
-};
-
-export const useMeetingRequirements = (meetingId: string | undefined) => {
-  return useQuery({
-    queryKey: ['meetings', meetingId, 'requirements'],
-    queryFn: () => fetcher<MeetingRequirementResponse[]>(`/meetings/${meetingId}/requirements`),
-    enabled: !!meetingId,
-  });
-};
-
-export const useMeetingConcerns = (meetingId: string | undefined) => {
-  return useQuery({
-    queryKey: ['meetings', meetingId, 'concerns'],
-    queryFn: () => fetcher<MeetingConcernResponse[]>(`/meetings/${meetingId}/concerns`),
-    enabled: !!meetingId,
-  });
-};
-
-export const useMeetingTopics = (meetingId: string | undefined) => {
-  return useQuery({
-    queryKey: ['meetings', meetingId, 'topics'],
-    queryFn: () => fetcher<MeetingTopicResponse[]>(`/meetings/${meetingId}/topics`),
-    enabled: !!meetingId,
-  });
-};

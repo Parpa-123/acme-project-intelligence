@@ -7,8 +7,8 @@ import { FaUsers, FaEnvelope, FaCog, FaCalendar, FaBook, FaRobot } from 'react-i
 import { ProjectSettingsTab } from './tabs/ProjectSettingsTab';
 import { ProjectMembersTab } from './tabs/ProjectMembersTab';
 import { ProjectMeetingsTab } from './tabs/ProjectMeetingsTab';
-import { ProjectKnowledgeTab } from './tabs/ProjectKnowledgeTab';
 import { ChatDrawer } from '../../features/ai-chat/ChatDrawer';
+import { KnowledgeDrawer } from '../../features/knowledge/KnowledgeDrawer';
 
 export function ProjectWorkspace() {
   const { id } = useParams<{ id: string }>();
@@ -16,8 +16,9 @@ export function ProjectWorkspace() {
   
   const { data: dashboard, isLoading, error } = useProjectDashboard(projectId);
   const { data: currentUser } = useCurrentUser();
-  const [activeTab, setActiveTab] = useState<'overview' | 'knowledge' | 'members' | 'meetings' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'meetings' | 'settings'>('overview');
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(false);
 
   if (isNaN(projectId)) return <Navigate to="/projects" replace />;
   if (isLoading) return <div className="animate-pulse text-gray-400 text-glow-sm">Loading workspace...</div>;
@@ -44,6 +45,13 @@ export function ProjectWorkspace() {
         </div>
         <div className="flex items-center gap-4">
           <button
+            onClick={() => setIsKnowledgeOpen(true)}
+            className="flex items-center gap-2 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 text-indigo-300 px-5 py-3 rounded-xl transition-all font-bold text-sm shadow-[0_0_15px_rgba(99,102,241,0.2)] hover:shadow-[0_0_25px_rgba(99,102,241,0.4)]"
+          >
+            <FaBook size={18} />
+            Search
+          </button>
+          <button
             onClick={() => setIsCopilotOpen(true)}
             className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-xl transition-all font-bold text-sm shadow-[0_0_20px_rgba(16,185,129,0.5)] hover:shadow-[0_0_30px_rgba(16,185,129,0.7)] animate-pulse hover:animate-none"
           >
@@ -67,7 +75,7 @@ export function ProjectWorkspace() {
       {/* Tabs */}
       <div className="border-b border-white/10 overflow-x-auto no-scrollbar">
         <nav className="-mb-px flex space-x-8 min-w-max">
-          {(['overview', 'knowledge', 'members', 'meetings', 'settings'] as const).map((tab) => {
+          {(['overview', 'members', 'meetings', 'settings'] as const).map((tab) => {
             // Hide settings tab if not admin
             if (tab === 'settings' && !isAdmin) return null;
             
@@ -85,7 +93,6 @@ export function ProjectWorkspace() {
               >
                 {tab === 'settings' && <FaCog className="mr-2" />}
                 {tab === 'meetings' && <FaCalendar className="mr-2" />}
-                {tab === 'knowledge' && <FaBook className="mr-2" />}
                 {tab}
               </button>
             );
@@ -105,12 +112,6 @@ export function ProjectWorkspace() {
                 <p className="text-xs text-gray-500 mt-2">More dashboard features coming soon.</p>
               </div>
             </div>
-          </div>
-        )}
-
-        {activeTab === 'knowledge' && (
-          <div className="glass-panel rounded-2xl p-6 shadow-sm">
-            <ProjectKnowledgeTab projectId={projectId} />
           </div>
         )}
 
@@ -137,6 +138,13 @@ export function ProjectWorkspace() {
         projectId={projectId} 
         isOpen={isCopilotOpen} 
         onClose={() => setIsCopilotOpen(false)} 
+      />
+
+      {/* Knowledge Drawer */}
+      <KnowledgeDrawer 
+        projectId={projectId} 
+        isOpen={isKnowledgeOpen} 
+        onClose={() => setIsKnowledgeOpen(false)} 
       />
     </div>
   );

@@ -373,10 +373,6 @@ def get_meeting_knowledge(meeting_id: str, db: Session = Depends(get_db)):
 # Meeting Intelligence (Enrichment) APIs
 # ==========================================
 
-from src.enrichment.models import (
-    MeetingSummary, MeetingDecision, MeetingActionItem, 
-    MeetingRequirement, MeetingConcern, MeetingTopic
-)
 from src.meeting.models import MeetingProcessingStatus
 
 @session_router.get("/{meeting_id}/processing")
@@ -397,37 +393,6 @@ def get_meeting_processing_status(meeting_id: str, db: Session = Depends(get_db)
         "last_updated": record.last_updated
     }
 
-@session_router.get("/{meeting_id}/summary")
-def get_meeting_summary(meeting_id: str, db: Session = Depends(get_db)):
-    record = db.query(MeetingSummary).filter_by(meeting_id=meeting_id).first()
-    if not record:
-        return {"summary": None}
-    return {"summary": record.summary, "model": record.model, "created_at": record.created_at}
-
-@session_router.get("/{meeting_id}/decisions")
-def get_meeting_decisions(meeting_id: str, db: Session = Depends(get_db)):
-    records = db.query(MeetingDecision).filter_by(meeting_id=meeting_id).all()
-    return [{"id": r.id, "decision": r.decision, "confidence": r.confidence, "knowledge_chunk_id": r.knowledge_chunk_id} for r in records]
-
-@session_router.get("/{meeting_id}/action-items")
-def get_meeting_action_items(meeting_id: str, db: Session = Depends(get_db)):
-    records = db.query(MeetingActionItem).filter_by(meeting_id=meeting_id).all()
-    return [{"id": r.id, "assignee": r.assignee, "description": r.description, "due_date": r.due_date, "status": r.status, "knowledge_chunk_id": r.knowledge_chunk_id} for r in records]
-
-@session_router.get("/{meeting_id}/requirements")
-def get_meeting_requirements(meeting_id: str, db: Session = Depends(get_db)):
-    records = db.query(MeetingRequirement).filter_by(meeting_id=meeting_id).all()
-    return [{"id": r.id, "requirement": r.requirement, "priority": r.priority, "knowledge_chunk_id": r.knowledge_chunk_id} for r in records]
-
-@session_router.get("/{meeting_id}/concerns")
-def get_meeting_concerns(meeting_id: str, db: Session = Depends(get_db)):
-    records = db.query(MeetingConcern).filter_by(meeting_id=meeting_id).all()
-    return [{"id": r.id, "concern": r.concern, "severity": r.severity, "knowledge_chunk_id": r.knowledge_chunk_id} for r in records]
-
-@session_router.get("/{meeting_id}/topics")
-def get_meeting_topics(meeting_id: str, db: Session = Depends(get_db)):
-    records = db.query(MeetingTopic).filter_by(meeting_id=meeting_id).all()
-    return [{"id": r.id, "topic": r.topic, "knowledge_chunk_id": r.knowledge_chunk_id} for r in records]
 
 @session_router.websocket("/{meeting_id}/transcript/ws")
 async def websocket_transcript(websocket: WebSocket, meeting_id: str, db: Session = Depends(get_db)):

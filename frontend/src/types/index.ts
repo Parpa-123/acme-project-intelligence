@@ -119,7 +119,7 @@ export interface KnowledgeChunkResponse {
   id: string;
   chunk_index: number;
   entry_count: number;
-  participants: string[];
+  participant_ids: string[];
   text: string;
   start_timestamp: string;
   end_timestamp: string;
