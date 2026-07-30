@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 class ContextSource(BaseModel):
     chunk_id: str
     meeting_id: str
-    sequence_number: int
+    chunk_index: int
     score: float
     rerank_score: float
 

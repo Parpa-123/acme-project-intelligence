@@ -15,7 +15,7 @@ class HuggingFaceReranker(BaseReranker):
     def __init__(self, model: str = "BAAI/bge-reranker-v2-m3", api_key: str = None):
         self.model = model
         self.api_key = api_key or os.getenv("HF_API_KEY")
-        self.api_url = f"https://api-inference.huggingface.co/models/{self.model}"
+        self.api_url = os.environ.get("RERANKER_URL", "http://reranker:8000/rerank")
         
     async def rerank(self, query: str, chunks: List[RerankedChunk]) -> List[RerankedChunk]:
         if not chunks:
@@ -29,33 +29,34 @@ class HuggingFaceReranker(BaseReranker):
                 chunk.rerank_score = chunk.score
             return chunks
 
-        # Prepare payload: pairs of [query, chunk_text]
-        inputs = {"source_sentence": query, "sentences": [chunk.text for chunk in chunks]}
-        headers = {"Authorization": f"Bearer {self.api_key}"}
+        # TEI format
+        payload = {"query": query, "texts": [chunk.text for chunk in chunks]}
+        headers = {}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
 
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     self.api_url, 
                     headers=headers, 
-                    json={"inputs": inputs},
+                    json=payload,
                     timeout=10.0
                 )
                 
                 if response.status_code != 200:
-                    raise RerankerProviderError(f"HuggingFace API returned {response.status_code}: {response.text}")
+                    raise RerankerProviderError(f"Reranker API returned {response.status_code}: {response.text}")
                     
-                scores = response.json()
+                results = response.json()
                 
-                if not isinstance(scores, list) or len(scores) != len(chunks):
-                    # Sometimes HF API is loading the model and returns an error dictionary
-                    if isinstance(scores, dict) and "error" in scores:
-                        raise RerankerProviderError(f"Model is loading: {scores['error']}")
-                    raise RerankerProviderError("Invalid response format from HuggingFace API")
+                if not isinstance(results, list):
+                    raise RerankerProviderError("Invalid response format from Reranker API")
                     
-                # Map scores back to chunks
-                for i, score in enumerate(scores):
-                    chunks[i].rerank_score = float(score)
+                # Map scores back to chunks (TEI returns list of dicts with 'index' and 'score')
+                for item in results:
+                    idx = item.get("index")
+                    if idx is not None and 0 <= idx < len(chunks):
+                        chunks[idx].rerank_score = float(item.get("score", 0.0))
                     
                 return chunks
                 

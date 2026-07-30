@@ -30,8 +30,8 @@ class ContextAssembler:
             # We want seq-1, seq, seq+1 from the same meeting
             neighbors = self.db.query(DBKnowledgeChunk).filter(
                 DBKnowledgeChunk.meeting_id == db_chunk.meeting_id,
-                DBKnowledgeChunk.sequence_number >= db_chunk.sequence_number - 1,
-                DBKnowledgeChunk.sequence_number <= db_chunk.sequence_number + 1
+                DBKnowledgeChunk.chunk_index >= db_chunk.chunk_index - 1,
+                DBKnowledgeChunk.chunk_index <= db_chunk.chunk_index + 1
             ).all()
             
             for n in neighbors:
@@ -45,8 +45,8 @@ class ContextAssembler:
         """
         Sorts chunks chronologically and removes exact duplicates.
         """
-        # Sort by meeting_id, then sequence_number
-        chunks.sort(key=lambda c: (str(c.meeting_id), c.sequence_number))
+        # Sort by meeting_id, then chunk_index
+        chunks.sort(key=lambda c: (str(c.meeting_id), c.chunk_index))
         
         # Remove exact duplicates based on chunk ID
         # (Though seen_ids in expand_neighbors already helps, we do this for safety)
@@ -110,7 +110,7 @@ class ContextAssembler:
                 ContextSource(
                     chunk_id=str(chunk.id),
                     meeting_id=str(chunk.meeting_id),
-                    sequence_number=chunk.sequence_number,
+                    chunk_index=chunk.chunk_index,
                     score=score,
                     rerank_score=rerank_score
                 )

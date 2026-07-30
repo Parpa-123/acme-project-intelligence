@@ -3,11 +3,12 @@ import { useParams, Navigate } from 'react-router-dom';
 import { useProjectDashboard } from '../../api/projects';
 import { useCurrentUser } from '../../api/user';
 import { Badge } from '../../components/ui/Badge';
-import { FaUsers, FaEnvelope, FaCog, FaCalendar, FaBook } from 'react-icons/fa';
+import { FaUsers, FaEnvelope, FaCog, FaCalendar, FaBook, FaRobot } from 'react-icons/fa';
 import { ProjectSettingsTab } from './tabs/ProjectSettingsTab';
 import { ProjectMembersTab } from './tabs/ProjectMembersTab';
 import { ProjectMeetingsTab } from './tabs/ProjectMeetingsTab';
 import { ProjectKnowledgeTab } from './tabs/ProjectKnowledgeTab';
+import { ChatDrawer } from '../../features/ai-chat/ChatDrawer';
 
 export function ProjectWorkspace() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,7 @@ export function ProjectWorkspace() {
   const { data: dashboard, isLoading, error } = useProjectDashboard(projectId);
   const { data: currentUser } = useCurrentUser();
   const [activeTab, setActiveTab] = useState<'overview' | 'knowledge' | 'members' | 'meetings' | 'settings'>('overview');
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
   if (isNaN(projectId)) return <Navigate to="/projects" replace />;
   if (isLoading) return <div className="animate-pulse text-gray-400 text-glow-sm">Loading workspace...</div>;
@@ -40,15 +42,24 @@ export function ProjectWorkspace() {
           </div>
           <p className="text-gray-400 text-sm max-w-2xl mt-2">{project.description || 'No description provided.'}</p>
         </div>
-        <div className="flex items-center gap-6 text-sm bg-white/5 px-4 py-3 rounded-xl border border-white/10">
-          <div className="flex flex-col items-center md:items-end">
-            <span className="text-gray-400 font-medium flex items-center gap-1.5"><FaUsers className="text-indigo-400" /> Members</span>
-            <span className="font-bold text-white text-glow-sm mt-1">{total_members}</span>
-          </div>
-          <div className="w-px h-8 bg-white/10" />
-          <div className="flex flex-col items-center md:items-end">
-            <span className="text-gray-400 font-medium flex items-center gap-1.5"><FaEnvelope className="text-emerald-400" /> Pending</span>
-            <span className="font-bold text-white text-glow-sm mt-1">{pending_invitations_count}</span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsCopilotOpen(true)}
+            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-xl transition-all font-bold text-sm shadow-[0_0_20px_rgba(16,185,129,0.5)] hover:shadow-[0_0_30px_rgba(16,185,129,0.7)] animate-pulse hover:animate-none"
+          >
+            <FaRobot size={18} />
+            AI Chat
+          </button>
+          <div className="flex items-center gap-6 text-sm bg-white/5 px-4 py-3 rounded-xl border border-white/10">
+            <div className="flex flex-col items-center md:items-end">
+              <span className="text-gray-400 font-medium flex items-center gap-1.5"><FaUsers className="text-indigo-400" /> Members</span>
+              <span className="font-bold text-white text-glow-sm mt-1">{total_members}</span>
+            </div>
+            <div className="w-px h-8 bg-white/10" />
+            <div className="flex flex-col items-center md:items-end">
+              <span className="text-gray-400 font-medium flex items-center gap-1.5"><FaEnvelope className="text-emerald-400" /> Pending</span>
+              <span className="font-bold text-white text-glow-sm mt-1">{pending_invitations_count}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -116,10 +127,17 @@ export function ProjectWorkspace() {
           <ProjectMeetingsTab projectId={projectId} />
         )}
 
+
         {activeTab === 'settings' && isAdmin && (
           <ProjectSettingsTab project={project} />
         )}
       </div>
+
+      <ChatDrawer 
+        projectId={projectId} 
+        isOpen={isCopilotOpen} 
+        onClose={() => setIsCopilotOpen(false)} 
+      />
     </div>
   );
 }

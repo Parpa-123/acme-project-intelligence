@@ -180,3 +180,14 @@ services:
       - postgres
     networks:
       - app-network
+
+  # 10. TEI Reranker
+  reranker:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.5
+    container_name: reranker
+    restart: unless-stopped
+    command: --model-id BAAI/bge-reranker-base --port 8000
+    ports:
+      - "8001:8000"
+    networks:
+      - app-network
