@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { useProjectDashboard } from '../../api/projects';
 import { useCurrentUser } from '../../api/user';
@@ -9,6 +9,7 @@ import { ProjectMembersTab } from './tabs/ProjectMembersTab';
 import { ProjectMeetingsTab } from './tabs/ProjectMeetingsTab';
 import { ChatDrawer } from '../../features/ai-chat/ChatDrawer';
 import { KnowledgeDrawer } from '../../features/knowledge/KnowledgeDrawer';
+import { useSidebarStore } from '../../stores/useSidebarStore';
 
 export function ProjectWorkspace() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +20,24 @@ export function ProjectWorkspace() {
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'meetings' | 'settings'>('overview');
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(false);
+  const isSidebarOpen = useSidebarStore(state => state.isOpen);
+  const setIsSidebarOpen = useSidebarStore(state => state.setIsOpen);
+  const previousSidebarState = useRef(isSidebarOpen);
+
+  useEffect(() => {
+    // Only capture state when both are closed
+    if (!isCopilotOpen && !isKnowledgeOpen) {
+      previousSidebarState.current = isSidebarOpen;
+    }
+  }, [isCopilotOpen, isKnowledgeOpen, isSidebarOpen]);
+
+  useEffect(() => {
+    if (isCopilotOpen || isKnowledgeOpen) {
+      setIsSidebarOpen(false);
+    } else {
+      setIsSidebarOpen(previousSidebarState.current);
+    }
+  }, [isCopilotOpen, isKnowledgeOpen, setIsSidebarOpen]);
 
   if (isNaN(projectId)) return <Navigate to="/projects" replace />;
   if (isLoading) return <div className="animate-pulse text-gray-400 text-glow-sm">Loading workspace...</div>;

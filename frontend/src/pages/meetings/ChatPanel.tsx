@@ -78,19 +78,19 @@ export function ChatPanel({ meetingId }: { meetingId: string }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-transparent">
-      <div className="h-[60px] flex-shrink-0 border-b border-white/10 flex items-center justify-between px-4 glass-panel text-white">
-        <h3 className="font-bold flex items-center gap-2 text-glow-sm">
-          <MessageSquare className="w-4 h-4 text-indigo-400" />
+    <div className="flex flex-col h-full bg-[#111]">
+      <div className="h-14 flex-shrink-0 border-b border-white/10 flex items-center justify-between px-4 bg-[#181818] text-white">
+        <h3 className="font-bold flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-gray-400" />
           Chat
         </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-transparent no-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#111] no-scrollbar">
         {isLoading ? (
-          <div className="text-center text-gray-400 text-sm mt-4 animate-pulse">Loading history...</div>
+          <div className="text-center text-gray-500 text-sm mt-4 animate-pulse">Loading history...</div>
         ) : messages.length === 0 ? (
-          <div className="text-center text-gray-400 text-sm mt-10">
+          <div className="text-center text-gray-500 text-sm mt-10">
             No messages yet. Start the conversation!
           </div>
         ) : (
@@ -98,12 +98,12 @@ export function ChatPanel({ meetingId }: { meetingId: string }) {
             const isMe = msg.user_id.toString() === localParticipant.identity;
             return (
               <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                <span className="text-xs text-gray-400 mb-1 mx-1">{isMe ? 'You' : msg.user_name}</span>
+                <span className="text-[11px] text-gray-500 mb-1 mx-1">{isMe ? 'You' : msg.user_name}</span>
                 <div 
-                  className={`px-3 py-2 rounded-2xl max-w-[90%] text-[13px] shadow-sm leading-relaxed
+                  className={`px-3 py-2 rounded-xl max-w-[90%] text-[13px] shadow-sm leading-relaxed
                     ${isMe 
-                      ? 'bg-indigo-500/20 text-indigo-300 rounded-tr-sm ring-1 ring-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.1)]' 
-                      : 'bg-white/10 text-gray-200 border border-white/10 rounded-tl-sm'
+                      ? 'bg-blue-600 text-white rounded-tr-sm' 
+                      : 'bg-[#222] text-gray-200 border border-white/5 rounded-tl-sm'
                     }`
                   }
                 >
@@ -116,7 +116,7 @@ export function ChatPanel({ meetingId }: { meetingId: string }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 glass-panel border-t border-white/10 flex-shrink-0 h-[72px]">
+      <div className="p-4 bg-[#181818] border-t border-white/10 flex-shrink-0">
         <form onSubmit={handleSend} className="relative h-full">
           <input
             type="text"
@@ -124,12 +124,12 @@ export function ChatPanel({ meetingId }: { meetingId: string }) {
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Type a message..."
             disabled={sendMessageToDb.isPending}
-            className="w-full h-10 pl-4 pr-10 bg-white/5 border border-white/10 focus:bg-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-full text-sm text-white transition-all outline-none placeholder-gray-500 shadow-inner"
+            className="w-full h-10 pl-4 pr-10 bg-[#222] border border-white/10 focus:bg-[#2a2a2a] focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-full text-sm text-white transition-all outline-none placeholder-gray-500"
           />
           <button 
             type="submit" 
             disabled={!inputText.trim() || sendMessageToDb.isPending}
-            className="absolute right-1 top-1 bottom-1 w-8 h-8 flex items-center justify-center bg-indigo-500/20 text-indigo-300 rounded-full hover:bg-indigo-500/40 hover:text-white ring-1 ring-indigo-500/30 disabled:opacity-50 transition-all cursor-pointer"
+            className="absolute right-1 top-1 bottom-1 w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-500 disabled:opacity-50 disabled:bg-[#333] disabled:text-gray-500 transition-all cursor-pointer"
           >
             <Send className="w-4 h-4 ml-[-2px]" />
           </button>

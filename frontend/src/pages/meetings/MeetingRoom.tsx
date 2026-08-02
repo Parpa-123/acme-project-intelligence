@@ -6,15 +6,18 @@ import {
   useTracks,
   useConnectionState,
   ParticipantTile,
-  useTrackToggle,
-  useDisconnectButton,
+  TrackToggle,
+  DisconnectButton,
+  GridLayout,
 } from '@livekit/components-react';
 import { Track, ConnectionState } from 'livekit-client';
-import { Video, Mic, MicOff, VideoOff, PhoneOff, MonitorUp, Loader2, MessageSquare, FileText, Users, Bot, BotOff } from 'lucide-react';
+import { Loader2, PhoneOff, MessageSquare, FileText, Users, Bot, BotOff } from 'lucide-react';
 import { useLeaveMeeting } from '../../api/meetings';
 import { RightSidebar } from './RightSidebar';
 import type { SidebarTab } from './RightSidebar';
 import { useAudioStreamer } from '../../hooks/useAudioStreamer';
+
+
 
 export function MeetingRoom() {
   const location = useLocation();
@@ -50,10 +53,9 @@ export function MeetingRoom() {
       audio={initialAudio}
       token={token}
       serverUrl={url}
-      className="h-screen w-screen bg-[#050505] flex flex-col overflow-hidden relative"
+      data-lk-theme="default"
+      style={{ height: '100dvh', width: '100vw', backgroundColor: '#111' }}
     >
-      {/* Background gradients for depth */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
       <MeetingUI meetingId={meetingId} onLeave={handleDisconnected} />
       <RoomAudioRenderer />
     </LiveKitRoom>
@@ -62,7 +64,7 @@ export function MeetingRoom() {
 
 function MeetingUI({ meetingId, onLeave }: { meetingId: string, onLeave: () => void }) {
   const connectionState = useConnectionState();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<SidebarTab>('chat');
   
   const [isTranscriptionEnabled, setIsTranscriptionEnabled] = useState(false);
@@ -101,27 +103,33 @@ function MeetingUI({ meetingId, onLeave }: { meetingId: string, onLeave: () => v
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full">
-      <div className="flex-1 flex overflow-hidden">
-        {/* Video Grid */}
-        <div className="flex-1 p-6 flex items-center justify-center min-h-0 bg-transparent z-10">
-          <div className="w-full h-full grid gap-6" style={{ 
-          gridTemplateColumns: `repeat(auto-fit, minmax(300px, 1fr))`,
-          gridAutoRows: '1fr'
-        }}>
-          {tracks.map((trackRef) => (
-            <div key={trackRef.participant.identity + trackRef.source} className="rounded-2xl overflow-hidden glass-panel border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.5)] relative group">
-              <ParticipantTile 
-                trackRef={trackRef}
-                className="w-full h-full object-cover"
-                style={{ width: '100%', height: '100%' }}
-              />
-              <div className="absolute bottom-4 left-4 bg-[#0A0A0A]/80 border border-white/10 backdrop-blur-md px-4 py-2 rounded-xl text-sm font-bold text-white flex items-center text-glow-sm shadow-lg">
-                {trackRef.participant.name || trackRef.participant.identity}
-              </div>
-            </div>
-          ))}
+    <div className="flex w-full h-full relative overflow-hidden bg-[#111]">
+      <div className="flex-1 relative flex flex-col min-w-0">
+        <GridLayout tracks={tracks} style={{ height: '100%', width: '100%' }}>
+          <ParticipantTile />
+        </GridLayout>
+
+        {/* Persistent Call Cut Marker */}
+        <div className="absolute top-4 right-4 z-50">
+          <DisconnectButton stopTracks={true} onClick={onLeave} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-bold shadow-[0_0_15px_rgba(220,38,38,0.5)]">
+            <PhoneOff className="w-5 h-5" />
+            <span>Leave</span>
+          </DisconnectButton>
         </div>
+
+        {/* Control Bar */}
+        <CustomControlBar 
+          isSidebarOpen={isSidebarOpen} 
+          activeTab={activeTab}
+          toggleSidebar={toggleSidebar}
+          isTranscriptionEnabled={isTranscriptionEnabled}
+          setIsTranscriptionEnabled={setIsTranscriptionEnabled}
+          sttMode={sttMode}
+          setSttMode={setSttMode}
+          sttLanguage={sttLanguage}
+          setSttLanguage={setSttLanguage}
+          meetingId={meetingId}
+        />
       </div>
 
       {/* Right Sidebar */}
@@ -133,22 +141,6 @@ function MeetingUI({ meetingId, onLeave }: { meetingId: string, onLeave: () => v
           onClose={() => setIsSidebarOpen(false)} 
         />
       )}
-      </div>
-
-      {/* Control Bar */}
-      <CustomControlBar 
-        isSidebarOpen={isSidebarOpen} 
-        activeTab={activeTab}
-        toggleSidebar={toggleSidebar}
-        isTranscriptionEnabled={isTranscriptionEnabled}
-        setIsTranscriptionEnabled={setIsTranscriptionEnabled}
-        sttMode={sttMode}
-        setSttMode={setSttMode}
-        sttLanguage={sttLanguage}
-        setSttLanguage={setSttLanguage}
-        meetingId={meetingId}
-        onLeave={onLeave}
-      />
     </div>
   );
 }
@@ -163,8 +155,7 @@ function CustomControlBar({
   setSttMode,
   sttLanguage,
   setSttLanguage,
-  meetingId,
-  onLeave
+  meetingId
 }: { 
   isSidebarOpen: boolean; 
   activeTab: SidebarTab;
@@ -176,149 +167,93 @@ function CustomControlBar({
   sttLanguage: string;
   setSttLanguage: (lang: string) => void;
   meetingId: string;
-  onLeave: () => void;
 }) {
   
-  // Microphone Toggle
-  const { buttonProps: micProps, enabled: isMicEnabled } = useTrackToggle({ source: Track.Source.Microphone });
-  const isMicMuted = !isMicEnabled;
-
-  // Camera Toggle
-  const { buttonProps: cameraProps, enabled: isCameraEnabled } = useTrackToggle({ source: Track.Source.Camera });
-  const isCameraOff = !isCameraEnabled;
-
-  // Screen Share Toggle
-  const { buttonProps: screenShareProps, enabled: isScreenShareEnabled } = useTrackToggle({ source: Track.Source.ScreenShare });
-
-  // Disconnect Button
-  const { buttonProps: disconnectProps } = useDisconnectButton({ stopTracks: true });
-
-  const handleDisconnect = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (disconnectProps.onClick) disconnectProps.onClick(e);
-    onLeave();
-  };
-
   useAudioStreamer(meetingId, isTranscriptionEnabled, sttLanguage, sttMode);
 
   return (
-    <div className="h-24 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/10 flex items-center justify-center gap-4 px-6 z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
-      <button 
-        {...micProps}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
-          isMicMuted ? 'bg-red-500/80 hover:bg-red-500 text-white ring-1 ring-red-500/50' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
-        }`}
-      >
-        {isMicMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-      </button>
+    <div className="lk-control-bar absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-xl border border-white/10 bg-[#111]/90 backdrop-blur">
+      <div className="flex items-center gap-2">
+        <TrackToggle source={Track.Source.Microphone} className="lk-button" />
+        <TrackToggle source={Track.Source.Camera} className="lk-button" />
+        <TrackToggle source={Track.Source.ScreenShare} className="lk-button" />
+      </div>
 
-      <button 
-        {...cameraProps}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
-          isCameraOff ? 'bg-red-500/80 hover:bg-red-500 text-white ring-1 ring-red-500/50' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
-        }`}
-      >
-        {isCameraOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
-      </button>
 
-      <button 
-        {...screenShareProps}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
-          isScreenShareEnabled ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
-        }`}
-      >
-        <MonitorUp className="w-6 h-6" />
-      </button>
-
-      <div className="w-px h-10 bg-white/10 mx-2" />
-
-      <div className="flex items-center glass-panel rounded-full pl-2 pr-4 h-14 border border-white/10">
+      <div className="lk-button-group">
         <button 
           onClick={() => setIsTranscriptionEnabled(!isTranscriptionEnabled)}
-          className={`w-10 h-10 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-md ${
-            isTranscriptionEnabled ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-white/10 hover:bg-white/20 text-gray-400 ring-1 ring-white/20'
-          }`}
+          className="lk-button"
           title={isTranscriptionEnabled ? "Stop AI Transcription" : "Start AI Transcription"}
+          aria-pressed={isTranscriptionEnabled}
         >
           {isTranscriptionEnabled ? <Bot className="w-5 h-5" /> : <BotOff className="w-5 h-5" />}
         </button>
-        <div className="flex flex-col ml-3 gap-1">
+        <div className="flex flex-col mx-2 gap-1 justify-center">
           <select 
             value={sttMode} 
             onChange={(e) => setSttMode(e.target.value)}
             disabled={isTranscriptionEnabled}
-            className="text-xs bg-black/50 text-gray-300 rounded border border-white/10 px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
+            className="text-xs bg-[#111] text-gray-300 rounded border border-white/10 px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
           >
-            <option value="transcribe" className="bg-[#1A1A1A]">Transcribe</option>
-            <option value="translate" className="bg-[#1A1A1A]">Translate (EN)</option>
-            <option value="codemix" className="bg-[#1A1A1A]">Codemix</option>
-            <option value="verbatim" className="bg-[#1A1A1A]">Verbatim</option>
-            <option value="translit" className="bg-[#1A1A1A]">Translit</option>
+            <option value="transcribe">Transcribe</option>
+            <option value="translate">Translate (EN)</option>
+            <option value="codemix">Codemix</option>
+            <option value="verbatim">Verbatim</option>
+            <option value="translit">Translit</option>
           </select>
           <select 
             value={sttLanguage} 
             onChange={(e) => setSttLanguage(e.target.value)}
             disabled={isTranscriptionEnabled}
-            className="text-xs bg-black/50 text-gray-300 rounded border border-white/10 px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
+            className="text-xs bg-[#111] text-gray-300 rounded border border-white/10 px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
           >
-            <option value="en-IN" className="bg-[#1A1A1A]">English (IN)</option>
-            <option value="hi-IN" className="bg-[#1A1A1A]">Hindi</option>
-            <option value="bn-IN" className="bg-[#1A1A1A]">Bengali</option>
-            <option value="kn-IN" className="bg-[#1A1A1A]">Kannada</option>
-            <option value="ml-IN" className="bg-[#1A1A1A]">Malayalam</option>
-            <option value="mr-IN" className="bg-[#1A1A1A]">Marathi</option>
-            <option value="or-IN" className="bg-[#1A1A1A]">Odia</option>
-            <option value="pa-IN" className="bg-[#1A1A1A]">Punjabi</option>
-            <option value="ta-IN" className="bg-[#1A1A1A]">Tamil</option>
-            <option value="te-IN" className="bg-[#1A1A1A]">Telugu</option>
-            <option value="gu-IN" className="bg-[#1A1A1A]">Gujarati</option>
+            <option value="en-IN">English (IN)</option>
+            <option value="hi-IN">Hindi</option>
+            <option value="bn-IN">Bengali</option>
+            <option value="kn-IN">Kannada</option>
+            <option value="ml-IN">Malayalam</option>
+            <option value="mr-IN">Marathi</option>
+            <option value="or-IN">Odia</option>
+            <option value="pa-IN">Punjabi</option>
+            <option value="ta-IN">Tamil</option>
+            <option value="te-IN">Telugu</option>
+            <option value="gu-IN">Gujarati</option>
           </select>
         </div>
       </div>
 
-      <div className="w-px h-10 bg-white/10 mx-2" />
+      <div className="lk-button-group">
+        {/* Participants Toggle */}
+        <button 
+          onClick={() => toggleSidebar('participants')}
+          className="lk-button"
+          aria-pressed={isSidebarOpen && activeTab === 'participants'}
+          title="Participants"
+        >
+          <Users className="w-5 h-5" />
+        </button>
 
-      {/* Participants Toggle */}
-      <button 
-        onClick={() => toggleSidebar('participants')}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
-          isSidebarOpen && activeTab === 'participants' ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
-        }`}
-        title="Participants"
-      >
-        <Users className="w-6 h-6" />
-      </button>
+        {/* Chat Toggle */}
+        <button 
+          onClick={() => toggleSidebar('chat')}
+          className="lk-button"
+          aria-pressed={isSidebarOpen && activeTab === 'chat'}
+          title="Chat"
+        >
+          <MessageSquare className="w-5 h-5" />
+        </button>
 
-      {/* Chat Toggle */}
-      <button 
-        onClick={() => toggleSidebar('chat')}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
-          isSidebarOpen && activeTab === 'chat' ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
-        }`}
-        title="Chat"
-      >
-        <MessageSquare className="w-6 h-6" />
-      </button>
-
-      {/* Transcript Toggle */}
-      <button 
-        onClick={() => toggleSidebar('transcript')}
-        className={`w-14 h-14 flex items-center justify-center rounded-full transition-all cursor-pointer shadow-lg backdrop-blur-md ${
-          isSidebarOpen && activeTab === 'transcript' ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30' : 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
-        }`}
-        title="Transcript"
-      >
-        <FileText className="w-6 h-6" />
-      </button>
-
-      <div className="w-px h-10 bg-white/10 mx-2" />
-
-      <button 
-        {...disconnectProps}
-        onClick={handleDisconnect}
-        className="w-14 h-14 flex items-center justify-center rounded-full bg-red-500/80 hover:bg-red-500 text-white transition-all cursor-pointer shadow-[0_0_20px_rgba(239,68,68,0.4)] ring-1 ring-red-500/50"
-      >
-        <PhoneOff className="w-6 h-6" />
-      </button>
+        {/* Transcript Toggle */}
+        <button 
+          onClick={() => toggleSidebar('transcript')}
+          className="lk-button"
+          aria-pressed={isSidebarOpen && activeTab === 'transcript'}
+          title="Transcript"
+        >
+          <FileText className="w-5 h-5" />
+        </button>
+      </div>
     </div>
   );
 }

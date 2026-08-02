@@ -35,6 +35,7 @@ class MeetingSpaceDetailResponse(BaseModel):
     created_by: UserSummary
     created_at: datetime
     is_archived: bool
+    is_global: bool
 
 class MeetingSpaceUpdateRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=3, max_length=100)

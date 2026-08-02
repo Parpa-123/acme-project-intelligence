@@ -11,6 +11,7 @@ import { AppLayout } from './layouts/AppLayout';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { ProjectList } from './pages/projects/ProjectList';
 import { ProjectWorkspace } from './pages/projects/ProjectWorkspace';
+import { GlobalKnowledge } from './pages/global/GlobalKnowledge';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import { AcceptInvitePage } from './pages/invites/AcceptInvite';
 import { MeetingPreJoin } from './pages/meetings/MeetingPreJoin';
@@ -70,6 +71,7 @@ const App = () => {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/projects" element={<ProjectList />} />
             <Route path="/projects/:id" element={<ProjectWorkspace />} />
+            <Route path="/global-knowledge" element={<GlobalKnowledge />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
 

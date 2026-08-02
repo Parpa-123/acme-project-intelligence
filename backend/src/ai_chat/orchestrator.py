@@ -26,7 +26,7 @@ class RAGOrchestrator:
             
         messages.append({
             "role": "system",
-            "content": "You are a research orchestrator. Your job is to use available tools to gather evidence to answer the user's question. You must call tools until you have enough information, then stop."
+            "content": "You are a project orchestrator. Your job is to gather evidence to answer the user's question OR to save insights into the project's permanent memory. If the user makes a final decision, outlines a requirement, or defines an action item, use the appropriate save tool to record it into memory. If the user asks a question, use retrieve_chunks. You must call tools until you have completed the task, then stop."
         })
         messages.append({"role": "user", "content": query})
 

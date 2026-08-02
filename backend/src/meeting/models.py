@@ -78,6 +78,12 @@ class MeetingSpace(Base):
         nullable=False,
     )
 
+    is_global = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
     project = relationship("Project")
 
     creator = relationship("User")

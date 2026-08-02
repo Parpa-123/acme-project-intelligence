@@ -28,9 +28,29 @@ class KnowledgeExplorer:
         }
 
     def get_artifacts(self, project_id: int, model: Type[Any], meeting_id: Optional[str] = None, page: int = 1, size: int = 50):
-        query = self.db.query(model).join(Meeting, model.meeting_id == Meeting.id)\
-            .join(MeetingSpace, Meeting.meeting_space_id == MeetingSpace.id)\
-            .filter(MeetingSpace.project_id == project_id)
+        from sqlalchemy import or_
+        if hasattr(model, 'project_id'):
+            query = self.db.query(model).outerjoin(Meeting, model.meeting_id == Meeting.id)\
+                .outerjoin(MeetingSpace, Meeting.meeting_space_id == MeetingSpace.id)\
+                .filter(
+                    or_(
+                        model.project_id == project_id,
+                        MeetingSpace.project_id == project_id
+                    )
+                )
+        else:
+            query = self.db.query(model).join(Meeting, model.meeting_id == Meeting.id)\
+                .join(MeetingSpace, Meeting.meeting_space_id == MeetingSpace.id)\
+                .filter(MeetingSpace.project_id == project_id)
+                
+        # Exclude archived meeting spaces unless they are global
+        query = query.filter(
+            or_(
+                MeetingSpace.id.is_(None),
+                MeetingSpace.is_archived == False,
+                MeetingSpace.is_global == True
+            )
+        )
         
         if meeting_id:
             query = query.filter(model.meeting_id == meeting_id)

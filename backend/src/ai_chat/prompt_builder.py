@@ -9,6 +9,10 @@ CRITICAL RULES:
 3. ALWAYS cite your sources. The evidence includes source markers (e.g., "Chunk X" or meeting contexts). When you state a fact derived from the evidence, include a markdown footnote or inline citation referencing the source, e.g., "According to Chunk 4...".
 4. Maintain a helpful, professional, and concise tone.
 5. Do not summarize the entire evidence block unless asked. Directly answer the user's question.
+
+MEMORY CAPABILITIES:
+You have tools to save insights into the project's permanent memory (`save_decision`, `save_requirement`, `save_action_item`). 
+If the user and you finalize a decision, define a new requirement, or outline an action item in the chat, YOU MUST autonomously call the appropriate tool to save it. When you do, inform the user that you have successfully saved it to the project's memory.
 """
 
 class PromptBuilder:

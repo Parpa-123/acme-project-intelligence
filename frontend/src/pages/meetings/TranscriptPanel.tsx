@@ -58,7 +58,7 @@ export function TranscriptPanel({ meetingId }: { meetingId: string }) {
   }, [transcripts, activeSpeech]);
 
   if (isLoading) {
-    return <div className="p-4 text-center text-gray-400 flex-1 h-full flex items-center justify-center bg-transparent">Loading transcripts...</div>;
+    return <div className="p-4 text-center text-gray-500 flex-1 h-full flex items-center justify-center bg-[#111]">Loading transcripts...</div>;
   }
 
   const activeSpeakers = Object.entries(activeSpeech)
@@ -66,22 +66,22 @@ export function TranscriptPanel({ meetingId }: { meetingId: string }) {
     .map(([speaker]) => speaker);
 
   return (
-    <div className="flex flex-col h-full bg-transparent relative">
+    <div className="flex flex-col h-full bg-[#111] relative">
       <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
         {transcripts?.length === 0 && activeSpeakers.length === 0 ? (
-          <div className="text-center text-sm text-gray-400 mt-10">
+          <div className="text-center text-sm text-gray-500 mt-10">
             No transcripts yet. Start speaking to see live captions.
           </div>
         ) : (
           transcripts?.map((t) => (
             <div key={t.id} className="flex flex-col">
               <div className="flex items-baseline gap-2 mb-1">
-                <span className="text-xs font-bold text-white text-glow-sm">{t.user_name}</span>
+                <span className="text-xs font-bold text-gray-200">{t.user_name}</span>
                 <span className="text-[10px] text-gray-500">
                   {format(new Date(t.created_at), 'HH:mm')}
                 </span>
               </div>
-              <p className="text-sm text-gray-300 leading-relaxed bg-white/5 p-3 rounded-xl rounded-tl-none border border-white/10 shadow-sm">
+              <p className="text-[13px] text-gray-300 leading-relaxed bg-[#222] p-3 rounded-xl rounded-tl-none border border-white/5 shadow-sm">
                 {t.text}
               </p>
             </div>
@@ -92,11 +92,11 @@ export function TranscriptPanel({ meetingId }: { meetingId: string }) {
         {activeSpeakers.length > 0 && (
           <div className="flex flex-col opacity-50 animate-pulse mt-4">
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-xs font-bold text-indigo-400">
+              <span className="text-xs font-bold text-gray-400">
                 Someone is speaking...
               </span>
             </div>
-            <p className="text-sm text-indigo-300 italic bg-indigo-500/10 p-3 rounded-xl rounded-tl-none border border-indigo-500/20 shadow-inner">
+            <p className="text-[13px] text-gray-400 italic bg-[#222] p-3 rounded-xl rounded-tl-none border border-white/5 shadow-inner">
               Capturing audio...
             </p>
           </div>

@@ -17,14 +17,14 @@ export function RightSidebar({
   onClose: () => void;
 }) {
   return (
-    <div className="w-80 h-full bg-white flex flex-col flex-shrink-0 z-10 border-l border-gray-200">
+    <div className="w-80 h-full flex flex-col flex-shrink-0 z-10 border-l border-white/10 bg-[#111] text-white">
       {/* Tabs Header */}
-      <div className="h-[60px] flex-shrink-0 border-b border-gray-200 flex items-center justify-between px-2 bg-gray-50 text-gray-600">
+      <div className="h-14 flex-shrink-0 border-b border-white/10 flex items-center justify-between px-3 bg-[#181818]">
         <div className="flex items-center gap-1">
           <button 
             onClick={() => setActiveTab('participants')}
             className={`p-2 rounded-md transition-colors flex items-center gap-2 text-sm font-medium ${
-              activeTab === 'participants' ? 'bg-white text-indigo-600 shadow-sm' : 'hover:bg-gray-200 hover:text-gray-900'
+              activeTab === 'participants' ? 'bg-[#2a2a2a] text-white shadow-sm' : 'text-gray-400 hover:bg-[#222] hover:text-white'
             }`}
             title="Participants"
           >
@@ -34,7 +34,7 @@ export function RightSidebar({
           <button 
             onClick={() => setActiveTab('chat')}
             className={`p-2 rounded-md transition-colors flex items-center gap-2 text-sm font-medium ${
-              activeTab === 'chat' ? 'bg-white text-indigo-600 shadow-sm' : 'hover:bg-gray-200 hover:text-gray-900'
+              activeTab === 'chat' ? 'bg-[#2a2a2a] text-white shadow-sm' : 'text-gray-400 hover:bg-[#222] hover:text-white'
             }`}
             title="Chat"
           >
@@ -44,7 +44,7 @@ export function RightSidebar({
           <button 
             onClick={() => setActiveTab('transcript')}
             className={`p-2 rounded-md transition-colors flex items-center gap-2 text-sm font-medium ${
-              activeTab === 'transcript' ? 'bg-white text-indigo-600 shadow-sm' : 'hover:bg-gray-200 hover:text-gray-900'
+              activeTab === 'transcript' ? 'bg-[#2a2a2a] text-white shadow-sm' : 'text-gray-400 hover:bg-[#222] hover:text-white'
             }`}
             title="Transcript"
           >
@@ -52,7 +52,7 @@ export function RightSidebar({
           </button>
         </div>
         
-        <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-200 transition-colors">
+        <button onClick={onClose} className="p-2 text-gray-400 hover:text-white rounded-md hover:bg-[#222] transition-colors">
           <X className="w-4 h-4" />
         </button>
       </div>

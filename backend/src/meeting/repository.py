@@ -70,3 +70,11 @@ class MeetingSpaceRepository:
     def archive_meeting_space(self, space: MeetingSpace):
         space.is_archived = True
         self.db.commit()
+
+    def publish_meeting_space(self, space: MeetingSpace):
+        space.is_global = True
+        self.db.commit()
+
+    def unpublish_meeting_space(self, space: MeetingSpace):
+        space.is_global = False
+        self.db.commit()

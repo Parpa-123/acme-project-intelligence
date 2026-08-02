@@ -26,7 +26,11 @@ class RetrievalRepository:
             q = q.join(MeetingSpace, MeetingSpace.id == Meeting.meeting_space_id)
             
             # Apply Mandatory Project Filter
-            q = q.filter(MeetingSpace.project_id == filters.project_id)
+            from sqlalchemy import or_
+            q = q.filter(
+                MeetingSpace.project_id == filters.project_id, 
+                or_(MeetingSpace.is_archived == False, MeetingSpace.is_global == True)
+            )
             
             # Apply Optional Filters
             if filters.meeting_id:

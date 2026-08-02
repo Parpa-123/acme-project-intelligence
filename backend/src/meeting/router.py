@@ -122,7 +122,8 @@ def get_meeting_space(
         active_meeting=active_meeting_summary,
         created_by=created_by_summary,
         created_at=space.created_at,
-        is_archived=space.is_archived
+        is_archived=space.is_archived,
+        is_global=space.is_global
     )
 
 @space_router.put("/{space_id}", response_model=MeetingSpaceDetailResponse)
@@ -208,6 +209,50 @@ def archive_meeting_space(
         raise HTTPException(status_code=400, detail="Cannot archive a space with an active meeting in progress")
         
     repo.archive_meeting_space(space)
+    return None
+
+@space_router.post("/{space_id}/publish", status_code=204)
+def publish_meeting_space(
+    space_id: str,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    repo = MeetingSpaceRepository(db)
+    space = repo.get_meeting_space_by_id(space_id)
+    if not space:
+        raise HTTPException(status_code=404, detail="Meeting space not found")
+        
+    project_service = ProjectService(db)
+    user = project_service._get_user_by_supertokens_id(session.get_user_id())
+    project_service._check_project_access(
+        space.project_id, 
+        user.id, 
+        require_role=[MemberRole.OWNER, MemberRole.ADMIN]
+    )
+    
+    repo.publish_meeting_space(space)
+    return None
+
+@space_router.post("/{space_id}/unpublish", status_code=204)
+def unpublish_meeting_space(
+    space_id: str,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    repo = MeetingSpaceRepository(db)
+    space = repo.get_meeting_space_by_id(space_id)
+    if not space:
+        raise HTTPException(status_code=404, detail="Meeting space not found")
+        
+    project_service = ProjectService(db)
+    user = project_service._get_user_by_supertokens_id(session.get_user_id())
+    project_service._check_project_access(
+        space.project_id, 
+        user.id, 
+        require_role=[MemberRole.OWNER, MemberRole.ADMIN]
+    )
+    
+    repo.unpublish_meeting_space(space)
     return None
 
 @space_router.post("/{space_id}/start", response_model=MeetingSessionResponse)

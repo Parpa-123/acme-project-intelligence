@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "@livekit/components-styles";
+@import "@livekit/components-styles/prefabs";
 
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
