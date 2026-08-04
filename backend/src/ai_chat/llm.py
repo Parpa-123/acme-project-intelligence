@@ -3,8 +3,12 @@ import httpx
 import json
 import os
 import logging
+from tenacity import AsyncRetrying, wait_exponential, stop_after_attempt, retry_if_exception
 
 logger = logging.getLogger(__name__)
+
+def is_rate_limit_error(exception: Exception) -> bool:
+    return isinstance(exception, httpx.HTTPStatusError) and exception.response.status_code == 429
 
 class LLMProvider:
     """Base interface for Language Models"""
@@ -40,17 +44,20 @@ class OpenAICompatibleProvider(LLMProvider):
             payload["tool_choice"] = "auto"
 
         async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                f"{self.base_url}/chat/completions",
-                headers=self.headers,
-                json=payload
-            )
-            try:
-                response.raise_for_status()
-            except httpx.HTTPStatusError as e:
-                if e.response.status_code == 429:
-                    raise Exception("LLM Provider rate limit exceeded. Please try again in a moment.")
-                raise
+            async for attempt in AsyncRetrying(
+                wait=wait_exponential(multiplier=2, min=2, max=65),
+                stop=stop_after_attempt(10),
+                retry=retry_if_exception(is_rate_limit_error),
+                reraise=True
+            ):
+                with attempt:
+                    response = await client.post(
+                        f"{self.base_url}/chat/completions",
+                        headers=self.headers,
+                        json=payload
+                    )
+                    response.raise_for_status()
+                    
             data = response.json()
             return data["choices"][0]["message"]
 
@@ -64,34 +71,44 @@ class OpenAICompatibleProvider(LLMProvider):
         }
         
         async with httpx.AsyncClient(timeout=60.0) as client:
-            async with client.stream(
-                "POST", 
-                f"{self.base_url}/chat/completions",
-                headers=self.headers,
-                json=payload
-            ) as response:
-                try:
-                    response.raise_for_status()
-                except httpx.HTTPStatusError as e:
-                    if e.response.status_code == 429:
-                        yield "LLM Provider rate limit exceeded. Please try again in a moment."
-                        return
-                    raise
-                async for line in response.aiter_lines():
-                    if line.startswith("data: "):
-                        data_str = line[len("data: "):]
-                        if data_str.strip() == "[DONE]":
-                            break
-                        try:
-                            data = json.loads(data_str)
-                            if "choices" in data and len(data["choices"]) > 0:
-                                delta = data["choices"][0].get("delta", {})
-                                content = delta.get("content")
-                                if content:
-                                    yield content
-                        except json.JSONDecodeError:
-                            logger.error(f"Failed to parse stream chunk: {data_str}")
-                            continue
+            try:
+                async for attempt in AsyncRetrying(
+                    wait=wait_exponential(multiplier=2, min=2, max=65),
+                    stop=stop_after_attempt(10),
+                    retry=retry_if_exception(is_rate_limit_error),
+                    reraise=True
+                ):
+                    with attempt:
+                        request = client.build_request(
+                            "POST",
+                            f"{self.base_url}/chat/completions",
+                            headers=self.headers,
+                            json=payload
+                        )
+                        response = await client.send(request, stream=True)
+                        response.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 429:
+                    yield "LLM Provider rate limit exceeded and retries exhausted. Please try again in a moment."
+                    return
+                raise
+                
+            async for line in response.aiter_lines():
+                if line.startswith("data: "):
+                    data_str = line[len("data: "):]
+                    if data_str.strip() == "[DONE]":
+                        break
+                    try:
+                        data = json.loads(data_str)
+                        if "choices" in data and len(data["choices"]) > 0:
+                            delta = data["choices"][0].get("delta", {})
+                            content = delta.get("content")
+                            if content:
+                                yield content
+                    except json.JSONDecodeError:
+                        logger.error(f"Failed to parse stream chunk: {data_str}")
+                        continue
+            await response.aclose()
 
 def get_default_llm() -> LLMProvider:
     """Factory to get the configured LLM provider"""

@@ -33,8 +33,12 @@ class RetrievalRepository:
             )
             
             # Apply Optional Filters
-            if filters.meeting_id:
-                q = q.filter(Meeting.id == UUID(filters.meeting_id))
+            if filters.meeting_id and filters.meeting_id.lower() != "null":
+                try:
+                    q = q.filter(Meeting.id == UUID(filters.meeting_id))
+                except ValueError:
+                    print(f"Warning: Ignored invalid meeting_id format: {filters.meeting_id}")
+                    pass
                 
             # Order by nearest neighbor (lowest distance)
             q = q.order_by(distance_expr)

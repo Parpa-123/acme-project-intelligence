@@ -70,9 +70,16 @@ class ProjectService:
         self.db.commit()
         return project
 
-    def list_projects(self, st_id: str):
+    def list_projects(self, st_id: str, page: int = 1, size: int = 20):
         user = self._get_user_by_supertokens_id(st_id)
-        return self.repo.get_user_projects(user.id)
+        projects, total = self.repo.get_user_projects_paginated(user.id, page, size)
+        return {
+            "items": projects,
+            "total": total,
+            "page": page,
+            "size": size,
+            "has_more": (page * size) < total
+        }
 
     def get_project(self, st_id: str, project_id: int):
         user = self._get_user_by_supertokens_id(st_id)

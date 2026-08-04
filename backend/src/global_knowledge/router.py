@@ -101,7 +101,9 @@ def search_global_knowledge(
     query = query.filter(MeetingSpace.is_global == True)
     query = query.order_by(distance_expr).limit(top_k)
     
-    db_results = query.all()
+    from src.core.metrics import retrieval_latency_histogram
+    with retrieval_latency_histogram.time():
+        db_results = query.all()
     
     results = []
     for chunk, dist, space_id, title, proj_id, proj_name in db_results:

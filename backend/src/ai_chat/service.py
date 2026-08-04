@@ -44,12 +44,15 @@ class ChatService:
             # 4. Build prompt
             final_prompt = PromptBuilder.build_prompt(query, evidence, history)
             
+            from src.core.metrics import llm_latency_histogram
+            
             # 5. Stream response
             full_response = ""
-            async for chunk_text in self.llm.stream(final_prompt):
-                full_response += chunk_text
-                # stream token
-                yield f"data: {json.dumps({'type': 'token', 'content': chunk_text})}\n\n"
+            with llm_latency_histogram.time():
+                async for chunk_text in self.llm.stream(final_prompt):
+                    full_response += chunk_text
+                    # stream token
+                    yield f"data: {json.dumps({'type': 'token', 'content': chunk_text})}\n\n"
                 
             # 6. Save assistant message to history
             self.repository.add_message(

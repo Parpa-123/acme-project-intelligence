@@ -49,7 +49,11 @@ class RAGOrchestrator:
                     tool_args = tool_call["function"]["arguments"]
                     
                     logger.info(f"Executing tool: {tool_name}")
-                    evidence = await execute_tool(tool_name, tool_args, self.db, project_id)
+                    try:
+                        evidence = await execute_tool(tool_name, tool_args, self.db, project_id)
+                    except Exception as e:
+                        logger.error(f"Tool {tool_name} failed with error: {e}")
+                        evidence = f"Error executing tool {tool_name}: {str(e)}"
                     
                     messages.append({
                         "role": "tool",

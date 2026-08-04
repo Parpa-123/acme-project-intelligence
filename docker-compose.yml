@@ -187,6 +187,7 @@ services:
     container_name: reranker
     restart: unless-stopped
     command: --model-id BAAI/bge-reranker-base --port 8000
+    env_file: backend/.env
     ports:
       - "8001:8000"
     networks:

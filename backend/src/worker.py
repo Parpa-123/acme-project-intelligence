@@ -1,15 +1,25 @@
 import os
 import resend
+import os
+import resend
 from arq.connections import RedisSettings
 
 
 # Ensure API key is picked up from env
 resend.api_key = os.environ.get("RESEND_API_KEY", "dummy_key")
 
+from src.core.logging import get_logger, setup_logging
+import structlog
+
+# Setup structlog for worker
+setup_logging()
+logger = get_logger("worker")
+
 async def send_project_invitation_email(ctx, email: str, inviter_name: str, project_name: str, token: str):
     """
     Background task to send an email via Resend.
     """
+    structlog.contextvars.bind_contextvars(email=email, project_name=project_name)
     confirm_url = f"http://localhost:3000/accept-invite?token={token}"
     html_content = f"""
     <div style="font-family: Arial, sans-serif; text-align: center; padding: 40px;">
@@ -26,18 +36,17 @@ async def send_project_invitation_email(ctx, email: str, inviter_name: str, proj
     """
 
     try:
-        print(f"Sending email to {email}...")
+        logger.info("Sending email...")
         result = resend.Emails.send({
             "from": os.environ.get("EMAIL_FROM", "Acme <onboarding@resend.dev>"),
             "to": [email],
             "subject": f"Invitation to join {project_name}",
             "html": html_content,
         })
-        print(f"Email sent successfully to {email}, id: {result.get('id')}")
+        logger.info("Email sent successfully", resend_id=result.get("id"))
         return result
     except Exception as e:
-        print(f"Error sending email to {email}: {str(e)}")
-
+        logger.error("Error sending email", exc_info=True)
         raise
 
 

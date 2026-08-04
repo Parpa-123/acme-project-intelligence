@@ -39,6 +39,9 @@ class ProjectMembers(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     role = Column(SQLEnum(MemberRole), default=MemberRole.MEMBER)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Eager loading relationship
+    user = relationship("User", lazy="joined")
 
 class ProjectInvitation(Base):
     __tablename__ = "project_invitations"
@@ -51,4 +54,8 @@ class ProjectInvitation(Base):
     invited_by = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     accepted_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Eager loading relationships
+    project = relationship("Project", lazy="joined")
+    invited_by_user = relationship("User", foreign_keys=[invited_by], lazy="joined")

@@ -28,7 +28,6 @@ eval-type-backport==0.4.0
 fastapi==0.139.0
 fastapi-cli==0.0.29
 fastapi-cloud-cli==0.22.1
-fastapi-redis-sdk==0.7.0
 fastar==0.11.0
 filelock==3.29.7
 frozenlist==1.8.0
@@ -85,7 +84,7 @@ python-dotenv==1.2.2
 python-multipart==0.0.32
 pytokens==0.4.1
 pyyaml==6.0.3
-redis==7.2.2
+redis==4.6.0
 requests==2.34.2
 requests-file==3.0.1
 resend==2.33.0
@@ -119,3 +118,10 @@ wrapt==1.17.3
 yarl==1.24.2
 zipp==4.1.0
 pgvector
+structlog
+asgi-correlation-id
+fastapi-limiter==0.1.6
+prometheus-fastapi-instrumentator
+prometheus-client
+fastapi-cache2[redis]==0.2.2
+tenacity

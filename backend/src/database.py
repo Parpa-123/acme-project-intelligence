@@ -7,7 +7,13 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 # E.g. postgresql+psycopg://appuser:apppassword@postgres:5432/appdb
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql+psycopg://appuser:apppassword@localhost:5432/appdb")
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=20,
+    max_overflow=10,
+    pool_pre_ping=True, # Prevent "MySQL/Postgres server has gone away" errors
+    pool_recycle=3600   # Recycle connections every hour
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

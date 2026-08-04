@@ -13,6 +13,10 @@ from src.supertokens_config import init_supertokens
 
 init_supertokens()
 
+# ── 1b. Configure Logging ────────────────────────────────────────────────────────
+from src.core.logging import setup_logging
+setup_logging()
+
 # ── 2. Create FastAPI app ──────────────────────────────────────────────────────
 from src.database import engine
 from src import models
@@ -24,15 +28,47 @@ models.Base.metadata.create_all(bind=engine)
 
 from contextlib import asynccontextmanager
 import asyncio
+import os
+import redis.asyncio as redis
+from fastapi_limiter import FastAPILimiter
 from src.meeting.consumer import consume_meeting_events
+
+async def poll_arq_queue_depth(redis_conn):
+    from src.core.metrics import redis_queue_depth_gauge
+    while True:
+        try:
+            # arq uses 'arq:queue' as the default list key for jobs
+            depth = await redis_conn.llen("arq:queue")
+            redis_queue_depth_gauge.set(depth)
+        except Exception:
+            pass
+        await asyncio.sleep(5)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize Redis for rate limiting and caching
+    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    redis_conn = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+    await FastAPILimiter.init(redis_conn)
+    
+    from fastapi_cache import FastAPICache
+    from fastapi_cache.backends.redis import RedisBackend
+    # Create a separate connection for cache since it expects bytes, not decoded strings
+    cache_conn = redis.from_url(redis_url)
+    FastAPICache.init(RedisBackend(cache_conn), prefix="fastapi-cache")
+
     # Startup: spawn the redis consumer
     task = asyncio.create_task(consume_meeting_events())
+    
+    # Startup: spawn queue depth poller
+    poll_task = asyncio.create_task(poll_arq_queue_depth(redis_conn))
+    
     yield
-    # Shutdown: cancel the consumer
+    
+    # Shutdown: cancel the consumer and close redis
     task.cancel()
+    poll_task.cancel()
+    await redis_conn.close()
     try:
         await task
     except asyncio.CancelledError:
@@ -49,23 +85,64 @@ app = FastAPI(
 # Must be added before CORSMiddleware so SuperTokens can intercept /auth/* routes
 app.add_middleware(get_middleware())
 
-# ── 4. CORS ────────────────────────────────────────────────────────────────────
+# ── 4. CORS and Security Headers ───────────────────────────────────────────────
+from src.core.middleware import SecurityHeadersMiddleware, LoggingMiddleware
+from asgi_correlation_id import CorrelationIdMiddleware
+
+# Add logging and correlation ID middleware
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
+
 # get_all_cors_headers() returns the extra headers SuperTokens needs exposed
+import os
+frontend_url = os.environ.get("VITE_WEB_URL", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],   # replace with your frontend domain(s)
+    allow_origins=[frontend_url],   # dynamic origin
     allow_credentials=True,
-    allow_methods=["GET", "PUT", "POST", "DELETE", "OPTIONS", "PATCH"],
+    allow_methods=["*"],
     allow_headers=["Content-Type"] + get_all_cors_headers(),
 )
 
+# ── 4b. Global Exception Handlers ──────────────────────────────────────────────
+from src.core.exceptions import setup_exception_handlers
+setup_exception_handlers(app)
+
+
+# ── 4c. Prometheus Metrics ───────────────────────────────────────────────────────
+from prometheus_fastapi_instrumentator import Instrumentator
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 # ── 5. Public routes ───────────────────────────────────────────────────────────
+from sqlalchemy import text
+import redis.asyncio as aioredis
+from fastapi import Response
 
 @app.get("/health", tags=["health"])
 async def health_check() -> JSONResponse:
     """Simple liveness probe — no auth required."""
     return JSONResponse({"status": "ok"})
+
+from sqlalchemy.orm import Session
+from src.database import get_db
+
+@app.get("/ready", tags=["health"])
+async def ready_check(db: Session = Depends(get_db)) -> Response:
+    """Readiness probe checking PostgreSQL and Redis."""
+    try:
+        # Check Postgres
+        db.execute(text("SELECT 1"))
+        
+        # Check Redis
+        redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+        r = aioredis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+        await r.ping()
+        await r.close()
+        
+        return JSONResponse({"status": "ready"})
+    except Exception as e:
+        return JSONResponse({"status": "unhealthy", "detail": str(e)}, status_code=503)
 
 
 # ── 6. Protected routes ────────────────────────────────────────────────────────

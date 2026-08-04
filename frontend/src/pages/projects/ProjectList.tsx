@@ -66,7 +66,7 @@ export function ProjectList() {
         </Button>
       </div>
 
-      {!projects || projects.length === 0 ? (
+      {!projects || !projects.items || projects.items.length === 0 ? (
         <div className="glass-panel border border-dashed border-white/20 rounded-2xl p-12 text-center flex flex-col items-center shadow-[0_0_20px_rgba(0,0,0,0.3)]">
           <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 ring-1 ring-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]">
             <FaFolderOpen className="text-gray-400 text-2xl" />
@@ -79,7 +79,7 @@ export function ProjectList() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map(project => (
+          {projects.items.map(project => (
             <Link 
               key={project.id} 
               to={`/projects/${project.id}`}

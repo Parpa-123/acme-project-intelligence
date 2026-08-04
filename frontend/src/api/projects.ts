@@ -6,7 +6,8 @@ import type {
   ProjectDashboardResponse,
   ProjectMemberResponse,
   InvitationResponse,
-  InvitationDetailsResponse
+  InvitationDetailsResponse,
+  PaginatedResponse
 } from '../types';
 
 // Dashboard
@@ -27,10 +28,10 @@ export function useProjectDashboard(projectId: number) {
 }
 
 // All Projects
-export function useProjects() {
+export function useProjects(page: number = 1, size: number = 20) {
   return useQuery({
-    queryKey: ['projects'],
-    queryFn: () => fetcher<ProjectResponse[]>('/projects'),
+    queryKey: ['projects', page, size],
+    queryFn: () => fetcher<PaginatedResponse<ProjectResponse>>(`/projects?page=${page}&size=${size}`),
   });
 }
 

@@ -28,7 +28,6 @@ class ProjectRepository:
         return self.db.query(Project).filter(Project.id == project_id).first()
 
     def get_user_projects(self, user_id: int) -> List[Project]:
-        # Projects owned by user OR where user is a member
         member_project_ids = self.db.query(ProjectMembers.project_id).filter(ProjectMembers.user_id == user_id)
         return self.db.query(Project).filter(
             or_(
@@ -36,6 +35,18 @@ class ProjectRepository:
                 Project.id.in_(member_project_ids)
             )
         ).all()
+
+    def get_user_projects_paginated(self, user_id: int, page: int = 1, size: int = 20):
+        member_project_ids = self.db.query(ProjectMembers.project_id).filter(ProjectMembers.user_id == user_id)
+        query = self.db.query(Project).filter(
+            or_(
+                Project.owner_id == user_id,
+                Project.id.in_(member_project_ids)
+            )
+        )
+        total = query.count()
+        projects = query.offset((page - 1) * size).limit(size).all()
+        return projects, total
 
     def update_project(self, project: Project, project_update: ProjectUpdate) -> Project:
         update_data = project_update.dict(exclude_unset=True)

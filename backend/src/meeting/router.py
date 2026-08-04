@@ -536,11 +536,7 @@ async def websocket_stt_proxy(
                                 import base64
                                 base64_audio = base64.b64encode(message["bytes"]).decode("utf-8")
                                 await sarvam_ws.send_json({
-                                    "audio": {
-                                        "data": base64_audio,
-                                        "sample_rate": 16000,
-                                        "encoding": "audio/wav"
-                                    }
+                                    "audio": base64_audio
                                 })
                             elif "text" in message:
                                 data = json.loads(message["text"])

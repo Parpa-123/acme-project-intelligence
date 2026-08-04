@@ -2,6 +2,15 @@ export type ProjectVisibility = 'private' | 'public';
 export type MemberRole = 'owner' | 'admin' | 'member';
 export type InvitationStatus = 'pending' | 'accepted' | 'expired';
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  has_more: boolean;
+}
+
+
 export interface UserBasicInfo {
   id: number;
   email: string;
