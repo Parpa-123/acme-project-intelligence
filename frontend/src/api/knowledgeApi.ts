@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetcher } from './client';
 
 export interface KnowledgeChunk {
@@ -101,5 +101,19 @@ export const useKnowledgeArtifacts = <T>(projectId: number, type: string, meetin
       return fetcher<PaginatedResponse<T>>(url);
     },
     enabled: !!projectId,
+  });
+};
+
+export const usePinKnowledge = (projectId: number) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (text: string) => 
+      fetcher<KnowledgeChunk>(`/projects/${projectId}/knowledge/pin`, {
+        method: 'POST',
+        body: JSON.stringify({ text }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['knowledge', projectId] });
+    },
   });
 };

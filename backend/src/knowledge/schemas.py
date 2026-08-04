@@ -3,6 +3,9 @@ from typing import List, Optional, Any, Dict, Generic, TypeVar
 from datetime import datetime
 from uuid import UUID
 
+class PinKnowledgeRequest(BaseModel):
+    text: str
+
 class KnowledgeChunkResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID

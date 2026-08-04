@@ -10,6 +10,7 @@ import { ProjectMeetingsTab } from './tabs/ProjectMeetingsTab';
 import { ChatDrawer } from '../../features/ai-chat/ChatDrawer';
 import { KnowledgeDrawer } from '../../features/knowledge/KnowledgeDrawer';
 import { useSidebarStore } from '../../stores/useSidebarStore';
+import { ProjectWorkspaceSkeleton } from '../../components/ui/Skeleton';
 
 export function ProjectWorkspace() {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +18,7 @@ export function ProjectWorkspace() {
   
   const { data: dashboard, isLoading, error } = useProjectDashboard(projectId);
   const { data: currentUser } = useCurrentUser();
-  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'meetings' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'meetings' | 'archives' | 'settings'>('overview');
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(false);
   const isSidebarOpen = useSidebarStore(state => state.isOpen);
@@ -40,7 +41,7 @@ export function ProjectWorkspace() {
   }, [isCopilotOpen, isKnowledgeOpen, setIsSidebarOpen]);
 
   if (isNaN(projectId)) return <Navigate to="/projects" replace />;
-  if (isLoading) return <div className="animate-pulse text-gray-400 text-glow-sm">Loading workspace...</div>;
+  if (isLoading) return <ProjectWorkspaceSkeleton />;
   if (error || !dashboard) return <div className="text-red-400 text-glow-sm">Project not found or you don't have access.</div>;
 
   const { project, total_members, pending_invitations_count, current_user_role } = dashboard;
@@ -58,6 +59,8 @@ export function ProjectWorkspace() {
           <div className="flex flex-wrap items-center gap-3 mb-2">
             <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight text-glow-md">{project.name}</h1>
             <Badge variant={project.visibility === 'public' ? 'secondary' : 'outline'}>{project.visibility}</Badge>
+            {project.is_archived && <Badge variant="destructive" className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">Archived</Badge>}
+            {project.is_global && <Badge variant="default" className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30">Global Knowledge</Badge>}
             {userRole && <Badge variant="default" className="capitalize">{userRole}</Badge>}
           </div>
           <p className="text-gray-400 text-sm max-w-2xl mt-2">{project.description || 'No description provided.'}</p>
@@ -90,6 +93,12 @@ export function ProjectWorkspace() {
           </div>
         </div>
       </div>
+
+      {project.is_archived && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-center justify-between text-yellow-200">
+          <p className="text-sm">This project is currently archived. It is frozen and hidden from active views.</p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-white/10 overflow-x-auto no-scrollbar">
@@ -146,7 +155,6 @@ export function ProjectWorkspace() {
         {activeTab === 'meetings' && (
           <ProjectMeetingsTab projectId={projectId} />
         )}
-
 
         {activeTab === 'settings' && isAdmin && (
           <ProjectSettingsTab project={project} />

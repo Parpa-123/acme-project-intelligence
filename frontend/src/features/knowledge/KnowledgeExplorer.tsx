@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Search, Filter, Briefcase, FileText, CheckSquare, Target, AlertTriangle, MessageSquare, Presentation } from 'lucide-react';
+import { Search, Filter, FileText, AlertTriangle, MessageSquare, Presentation } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBrain, faList, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { 
   useKnowledgeChunks, 
   useKnowledgeArtifacts, 
@@ -13,17 +15,22 @@ import type {
   Topic, 
   Summary,
 } from '../../api/knowledgeApi';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface KnowledgeExplorerProps {
   projectId: number;
 }
 
+const BrainWrapper = (props: any) => <FontAwesomeIcon icon={faBrain} {...props} />;
+const ListWrapper = (props: any) => <FontAwesomeIcon icon={faList} {...props} />;
+const CheckWrapper = (props: any) => <FontAwesomeIcon icon={faCheck} {...props} />;
+
 const KNOWLEDGE_VIEWS = [
   { id: 'search', label: 'Semantic Search', icon: Search },
   { id: 'all', label: 'All Knowledge (Chunks)', icon: Presentation },
-  { id: 'decisions', label: 'Decisions', icon: Briefcase },
-  { id: 'action-items', label: 'Action Items', icon: CheckSquare },
-  { id: 'requirements', label: 'Requirements', icon: Target },
+  { id: 'decisions', label: 'Decisions', icon: BrainWrapper },
+  { id: 'action-items', label: 'Action Items', icon: CheckWrapper },
+  { id: 'requirements', label: 'Requirements', icon: ListWrapper },
   { id: 'concerns', label: 'Concerns', icon: AlertTriangle },
   { id: 'topics', label: 'Topics', icon: MessageSquare },
   { id: 'summaries', label: 'Summaries', icon: FileText },
@@ -135,89 +142,117 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
           {/* CHUNKS VIEW */}
           {activeView === 'all' && (
             <div className="grid gap-4">
-              {chunksRes?.items.map(chunk => (
-                <div key={chunk.id} className="glass-panel p-4 rounded-xl border border-white/10">
-                  <p className="text-sm text-gray-300">{chunk.text}</p>
-                  <div className="mt-3 text-xs text-gray-500 flex justify-between">
-                    <span>Meeting: {chunk.meeting_title || 'Unknown'}</span>
-                    <span>{new Date(chunk.start_timestamp).toLocaleString()}</span>
+              {chunksRes?.items.length === 0 ? (
+                <EmptyState icon={Presentation} title="No Knowledge Chunks" description="No transcripts or knowledge chunks found in this project." />
+              ) : (
+                chunksRes?.items.map(chunk => (
+                  <div key={chunk.id} className="glass-panel p-4 rounded-xl border border-white/10 transition-all hover:bg-white/5">
+                    <p className="text-sm text-gray-300">{chunk.text}</p>
+                    <div className="mt-3 text-xs text-gray-500 flex justify-between">
+                      <span>Meeting: {chunk.meeting_title || 'Unknown'}</span>
+                      <span>{new Date(chunk.start_timestamp).toLocaleString()}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
           {/* DECISIONS VIEW */}
           {activeView === 'decisions' && (
             <div className="grid gap-4 md:grid-cols-2">
-              {decisionsRes?.items.map(d => (
-                <div key={d.id} className="glass-panel p-5 rounded-xl border border-white/10">
-                  <h3 className="font-bold text-white mb-2">{d.decision}</h3>
-                  <span className="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-md">Conf: {d.confidence}</span>
-                </div>
-              ))}
+              {decisionsRes?.items.length === 0 ? (
+                <EmptyState icon={BrainWrapper} title="No Decisions" description="AI hasn't extracted any decisions yet." className="col-span-full" />
+              ) : (
+                decisionsRes?.items.map(d => (
+                  <div key={d.id} className="glass-panel p-5 rounded-xl border border-white/10 transition-all hover:-translate-y-1 hover:shadow-lg">
+                    <h3 className="font-bold text-white mb-2">{d.decision}</h3>
+                    <span className="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-md">Conf: {d.confidence}</span>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
           {/* ACTION ITEMS VIEW */}
           {activeView === 'action-items' && (
             <div className="grid gap-4 md:grid-cols-2">
-              {actionItemsRes?.items.map(a => (
-                <div key={a.id} className="glass-panel p-5 rounded-xl border border-white/10">
-                  <h3 className="font-bold text-white mb-2">{a.description}</h3>
-                  <div className="flex space-x-2 text-xs">
-                    <span className="text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md">Assignee: {a.assignee || 'Unassigned'}</span>
-                    <span className="text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md">Status: {a.status}</span>
+              {actionItemsRes?.items.length === 0 ? (
+                <EmptyState icon={CheckWrapper} title="No Action Items" description="AI hasn't extracted any action items yet." className="col-span-full" />
+              ) : (
+                actionItemsRes?.items.map(a => (
+                  <div key={a.id} className="glass-panel p-5 rounded-xl border border-white/10 transition-all hover:-translate-y-1 hover:shadow-lg">
+                    <h3 className="font-bold text-white mb-2">{a.description}</h3>
+                    <div className="flex space-x-2 text-xs">
+                      <span className="text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md">Assignee: {a.assignee || 'Unassigned'}</span>
+                      <span className="text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md">Status: {a.status}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
           {/* REQUIREMENTS VIEW */}
           {activeView === 'requirements' && (
             <div className="grid gap-4 md:grid-cols-2">
-              {requirementsRes?.items.map(r => (
-                <div key={r.id} className="glass-panel p-5 rounded-xl border border-white/10">
-                  <h3 className="font-bold text-white mb-2">{r.requirement}</h3>
-                  <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-1 rounded-md">Priority: {r.priority}</span>
-                </div>
-              ))}
+              {requirementsRes?.items.length === 0 ? (
+                <EmptyState icon={ListWrapper} title="No Requirements" description="AI hasn't extracted any requirements yet." className="col-span-full" />
+              ) : (
+                requirementsRes?.items.map(r => (
+                  <div key={r.id} className="glass-panel p-5 rounded-xl border border-white/10 transition-all hover:-translate-y-1 hover:shadow-lg">
+                    <h3 className="font-bold text-white mb-2">{r.requirement}</h3>
+                    <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-1 rounded-md">Priority: {r.priority}</span>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
           {/* CONCERNS VIEW */}
           {activeView === 'concerns' && (
             <div className="grid gap-4 md:grid-cols-2">
-              {concernsRes?.items.map(c => (
-                <div key={c.id} className="glass-panel p-5 rounded-xl border border-white/10 border-l-2 border-l-red-500">
-                  <h3 className="font-bold text-white mb-2">{c.concern}</h3>
-                  <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded-md">Severity: {c.severity}</span>
-                </div>
-              ))}
+              {concernsRes?.items.length === 0 ? (
+                <EmptyState icon={AlertTriangle} title="No Concerns" description="AI hasn't extracted any concerns yet." className="col-span-full" />
+              ) : (
+                concernsRes?.items.map(c => (
+                  <div key={c.id} className="glass-panel p-5 rounded-xl border border-white/10 border-l-2 border-l-red-500 transition-all hover:-translate-y-1 hover:shadow-lg">
+                    <h3 className="font-bold text-white mb-2">{c.concern}</h3>
+                    <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded-md">Severity: {c.severity}</span>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
           {/* TOPICS VIEW */}
           {activeView === 'topics' && (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
-              {topicsRes?.items.map(t => (
-                <div key={t.id} className="glass-panel p-4 rounded-xl border border-white/10 flex items-center justify-center text-center">
-                  <span className="font-bold text-white text-glow-sm">{t.topic}</span>
-                </div>
-              ))}
+              {topicsRes?.items.length === 0 ? (
+                <EmptyState icon={MessageSquare} title="No Topics" description="AI hasn't extracted any topics yet." className="col-span-full" />
+              ) : (
+                topicsRes?.items.map(t => (
+                  <div key={t.id} className="glass-panel p-4 rounded-xl border border-white/10 flex items-center justify-center text-center transition-all hover:bg-white/5">
+                    <span className="font-bold text-white text-glow-sm">{t.topic}</span>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
           {/* SUMMARIES VIEW */}
           {activeView === 'summaries' && (
             <div className="space-y-6">
-              {summariesRes?.items.map(s => (
-                <div key={s.id} className="glass-panel p-6 rounded-xl border border-white/10">
-                  <div className="mb-4 text-xs text-gray-500">Meeting Summary</div>
-                  <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{s.summary}</p>
-                </div>
-              ))}
+              {summariesRes?.items.length === 0 ? (
+                <EmptyState icon={FileText} title="No Summaries" description="AI hasn't generated any summaries yet." />
+              ) : (
+                summariesRes?.items.map(s => (
+                  <div key={s.id} className="glass-panel p-6 rounded-xl border border-white/10 transition-all hover:bg-white/5">
+                    <div className="mb-4 text-xs text-gray-500">Meeting Summary</div>
+                    <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{s.summary}</p>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>

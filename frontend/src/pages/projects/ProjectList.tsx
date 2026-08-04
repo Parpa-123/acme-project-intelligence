@@ -9,6 +9,8 @@ import { Badge } from '../../components/ui/Badge';
 import { Dialog } from '../../components/ui/Dialog';
 import { FormInput } from '../../components/forms/FormInput';
 import { FaPlus, FaFolderOpen } from 'react-icons/fa';
+import { ProjectCardSkeleton } from '../../components/ui/Skeleton';
+import toast from 'react-hot-toast';
 
 const createProjectSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -26,7 +28,8 @@ const createProjectSchema = z.object({
 type CreateProjectFormValues = z.infer<typeof createProjectSchema>;
 
 export function ProjectList() {
-  const { data: projects, isLoading } = useProjects();
+  const [statusFilter, setStatusFilter] = useState<'active' | 'archived' | 'all'>('active');
+  const { data: projects, isLoading } = useProjects(1, 20, statusFilter);
   const [isModalOpen, setModalOpen] = useState(false);
   const createProject = useCreateProject();
 
@@ -47,23 +50,58 @@ export function ProjectList() {
         onSuccess: () => {
           setModalOpen(false);
           methods.reset();
+          toast.success('Project created successfully!');
+        },
+        onError: (err: any) => {
+          toast.error(err.message || 'Failed to create project');
         }
       }
     );
   };
 
-  if (isLoading) return <div className="animate-pulse text-gray-500">Loading projects...</div>;
+  if (isLoading) return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <div className="h-8 w-32 bg-white/10 rounded animate-pulse" />
+          <div className="h-4 w-64 bg-white/10 rounded mt-2 animate-pulse" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map(i => <ProjectCardSkeleton key={i} />)}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight text-glow-md">Projects</h1>
           <p className="text-sm text-gray-400 mt-1">Manage your team's workspaces and collaborations.</p>
         </div>
-        <Button onClick={() => setModalOpen(true)}>
-          <FaPlus className="mr-2 h-3.5 w-3.5" /> New Project
-        </Button>
+        <div className="flex items-center gap-4">
+          {/* Status Filters */}
+          <div className="bg-white/5 border border-white/10 p-1 rounded-xl flex gap-1">
+            {(['active', 'archived', 'all'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all ${
+                  statusFilter === s
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+
+          <Button onClick={() => setModalOpen(true)}>
+            <FaPlus className="mr-2 h-3.5 w-3.5" /> New Project
+          </Button>
+        </div>
       </div>
 
       {!projects || !projects.items || projects.items.length === 0 ? (
@@ -72,10 +110,14 @@ export function ProjectList() {
             <FaFolderOpen className="text-gray-400 text-2xl" />
           </div>
           <h3 className="text-lg font-bold text-white text-glow-sm">No projects found</h3>
-          <p className="text-sm text-gray-400 mt-2 max-w-sm">Get started by creating a new project. You can invite your team members right away.</p>
-          <Button onClick={() => setModalOpen(true)} className="mt-6">
-            Create Project
-          </Button>
+          <p className="text-sm text-gray-400 mt-2 max-w-sm">
+            {statusFilter === 'archived' ? 'No archived projects found.' : 'Get started by creating a new project.'}
+          </p>
+          {statusFilter === 'active' && (
+            <Button onClick={() => setModalOpen(true)} className="mt-6">
+              Create Project
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -87,12 +129,15 @@ export function ProjectList() {
             >
               <div className="flex justify-between items-start mb-3">
                 <h3 className="font-bold text-white group-hover:text-indigo-300 transition-colors text-glow-sm">{project.name}</h3>
-                <Badge variant={project.visibility === 'public' ? 'secondary' : 'outline'}>{project.visibility}</Badge>
+                <div className="flex gap-1.5">
+                  <Badge variant={project.visibility === 'public' ? 'secondary' : 'outline'}>{project.visibility}</Badge>
+                  {project.is_archived && <Badge variant="destructive" className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">Archived</Badge>}
+                  {project.is_global && <Badge variant="default" className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30">Global</Badge>}
+                </div>
               </div>
               <p className="text-sm text-gray-400 line-clamp-2 flex-1 mt-1">{project.description || 'No description provided.'}</p>
               <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-gray-500">
                 <span>Created {new Date(project.created_at).toLocaleDateString()}</span>
-                {/* ID could be useful for debugging or referencing */}
                 <span className="font-mono text-gray-600">#{project.id}</span>
               </div>
             </Link>

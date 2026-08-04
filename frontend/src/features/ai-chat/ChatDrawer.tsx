@@ -1,10 +1,47 @@
 import React, { useRef, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Dialog as HeadlessDialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useStreamingChat } from './useStreamingChat';
 import { useChatStore } from './useChatStore';
 import type { ChatSession } from './useChatStore';
-import { FaPaperPlane, FaRobot, FaUser, FaCircleNotch, FaPlus, FaComment, FaTimes, FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
+import { FaPaperPlane, FaRobot, FaUser, FaCircleNotch, FaPlus, FaComment, FaTimes, FaExpandAlt, FaCompressAlt, FaCopy, FaCheck, FaThumbtack } from 'react-icons/fa';
+import { usePinKnowledge } from '../../api/knowledgeApi';
+
+const MessageActions = ({ text, projectId, role }: { text: string, projectId: number, role: string }) => {
+  const [copied, setCopied] = useState(false);
+  const pinMutation = usePinKnowledge(projectId);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePin = () => {
+    pinMutation.mutate(text);
+  };
+
+  return (
+    <div className={`flex items-center gap-2 mt-2 pt-2 border-t border-white/5 opacity-50 hover:opacity-100 transition-opacity ${role === 'user' ? 'justify-end' : 'justify-start'}`}>
+      <button onClick={handleCopy} className="text-gray-400 hover:text-emerald-400 transition-colors p-1" title="Copy to clipboard">
+        {copied ? <FaCheck className="text-emerald-400" /> : <FaCopy />}
+      </button>
+      {role === 'assistant' && (
+        <button 
+          onClick={handlePin} 
+          disabled={pinMutation.isPending || pinMutation.isSuccess}
+          className={`transition-colors p-1 ${pinMutation.isSuccess ? 'text-emerald-400' : 'text-gray-400 hover:text-indigo-400'}`} 
+          title={pinMutation.isSuccess ? "Pinned!" : "Pin to Knowledge Base"}
+        >
+          {pinMutation.isPending ? <FaCircleNotch className="animate-spin" /> : <FaThumbtack />}
+        </button>
+      )}
+    </div>
+  );
+};
+
 
 interface ChatDrawerProps {
   projectId: number;
@@ -71,18 +108,33 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <>
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity"
-        onClick={onClose}
-      />
-      
-      {/* Drawer */}
-      <div className={`fixed right-0 top-0 h-screen bg-black/80 backdrop-blur-xl border-l border-white/10 shadow-2xl z-50 flex flex-col transition-all duration-300 ease-in-out ${isExpanded ? 'w-full md:w-[80vw]' : 'w-full md:w-[45vw] lg:w-[40vw]'}`}>
+    <Transition show={isOpen} as={Fragment}>
+      <HeadlessDialog as="div" className="relative z-50" onClose={onClose}>
+        {/* Backdrop */}
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+        </Transition.Child>
+        
+        {/* Drawer */}
+        <Transition.Child
+          as={Fragment}
+          enter="transform transition ease-in-out duration-300"
+          enterFrom="translate-x-full"
+          enterTo="translate-x-0"
+          leave="transform transition ease-in-out duration-300"
+          leaveFrom="translate-x-0"
+          leaveTo="translate-x-full"
+        >
+          <HeadlessDialog.Panel className={`fixed right-0 top-0 h-screen bg-black/80 backdrop-blur-xl border-l border-white/10 shadow-2xl flex flex-col transition-all duration-300 ease-in-out ${isExpanded ? 'w-full md:w-[80vw]' : 'w-full md:w-[45vw] lg:w-[40vw]'}`}>
         
         {/* Drawer Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5">
@@ -172,11 +224,12 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
                           {msg.role === 'user' ? <FaUser className="text-white text-sm" /> : <FaRobot className="text-emerald-400 text-sm" />}
                         </div>
                         <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                          <div className={`px-4 py-3 rounded-2xl ${msg.role === 'user' ? 'bg-emerald-600/50 border border-emerald-400/50 text-white' : 'glass-panel bg-white/5 border border-white/10 text-gray-200'}`}>
-                            <div className="prose prose-invert prose-sm max-w-none prose-a:text-emerald-400 hover:prose-a:text-emerald-300">
+                          <div className={`px-4 py-3 rounded-2xl shadow-md ${msg.role === 'user' ? 'bg-emerald-500 text-white rounded-br-sm border border-emerald-400/30' : 'glass-panel bg-[#242424] border border-white/10 text-gray-200 rounded-bl-sm'}`}>
+                            <div className={`prose prose-sm max-w-none prose-a:text-emerald-400 hover:prose-a:text-emerald-300 ${msg.role === 'user' ? 'prose-invert' : 'prose-invert'}`}>
                               <ReactMarkdown>{msg.content}</ReactMarkdown>
                             </div>
                           </div>
+                          <MessageActions text={msg.content} projectId={projectId} role={msg.role} />
                           {msg.status && (
                             <div className="mt-2 text-xs text-emerald-400/70 flex items-center gap-2">
                               <FaCircleNotch className="animate-spin" />
@@ -187,6 +240,24 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
                       </div>
                     </div>
                   ))
+                )}
+                {isStreaming && currentMessages.length > 0 && currentMessages[currentMessages.length - 1].role === 'user' && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[90%] md:max-w-[85%] flex gap-3 flex-row">
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-white/10 border border-white/20">
+                        <FaRobot className="text-emerald-400 text-sm" />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <div className="px-4 py-3 rounded-2xl shadow-md glass-panel bg-[#242424] border border-white/10 rounded-bl-sm">
+                          <div className="flex space-x-1 items-center h-5">
+                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
                 <div ref={messagesEndRef} />
               </div>
@@ -215,7 +286,9 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
             </div>
           </div>
         </div>
-      </div>
-    </>
+          </HeadlessDialog.Panel>
+        </Transition.Child>
+      </HeadlessDialog>
+    </Transition>
   );
 }

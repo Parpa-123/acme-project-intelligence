@@ -18,7 +18,8 @@ class KnowledgeChunk(Base):
     )
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    meeting_id = Column(UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    meeting_id = Column(UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="SET NULL"), nullable=True)
     
     chunk_index = Column(Integer, nullable=False)
     

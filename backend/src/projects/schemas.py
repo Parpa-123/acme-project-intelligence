@@ -36,6 +36,8 @@ class ProjectUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
     visibility: Optional[ProjectVisibility] = None
+    is_archived: Optional[bool] = None
+    is_global: Optional[bool] = None
 
 class ProjectResponse(BaseModel):
     id: int
@@ -43,6 +45,8 @@ class ProjectResponse(BaseModel):
     name: str
     description: Optional[str] = None
     visibility: ProjectVisibility
+    is_archived: bool = False
+    is_global: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
 

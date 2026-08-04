@@ -36,7 +36,7 @@ class ProjectRepository:
             )
         ).all()
 
-    def get_user_projects_paginated(self, user_id: int, page: int = 1, size: int = 20):
+    def get_user_projects_paginated(self, user_id: int, page: int = 1, size: int = 20, status: str = "active"):
         member_project_ids = self.db.query(ProjectMembers.project_id).filter(ProjectMembers.user_id == user_id)
         query = self.db.query(Project).filter(
             or_(
@@ -44,6 +44,11 @@ class ProjectRepository:
                 Project.id.in_(member_project_ids)
             )
         )
+        if status == "active":
+            query = query.filter(Project.is_archived == False)
+        elif status == "archived":
+            query = query.filter(Project.is_archived == True)
+
         total = query.count()
         projects = query.offset((page - 1) * size).limit(size).all()
         return projects, total

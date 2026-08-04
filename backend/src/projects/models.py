@@ -28,6 +28,8 @@ class Project(Base):
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     visibility = Column(SQLEnum(ProjectVisibility), default=ProjectVisibility.PRIVATE)
+    is_archived = Column(Boolean, default=False, nullable=False)
+    is_global = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

@@ -21,13 +21,12 @@ invitations_router = APIRouter(prefix="/invitations", tags=["invitations"])
 def get_service(db: Session = Depends(get_db)) -> ProjectService:
     return ProjectService(db)
 
-from fastapi_cache.decorator import cache
+
 
 # ----------------------------------------
 # Dashboards
 # ----------------------------------------
 @router.get("/dashboard", response_model=DashboardResponse)
-@cache(expire=60)
 def get_dashboard(
     service: ProjectService = Depends(get_service),
     session: SessionContainer = Depends(verify_session())
@@ -35,7 +34,6 @@ def get_dashboard(
     return service.get_dashboard(session.get_user_id())
 
 @router.get("/{project_id}/dashboard", response_model=ProjectDashboardResponse)
-@cache(expire=60)
 def get_project_dashboard(
     project_id: int,
     service: ProjectService = Depends(get_service),
@@ -71,10 +69,11 @@ from src.core.schemas import PaginatedResponse
 def list_projects(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
+    status: str = Query("active", description="Status filter: active, archived, all"),
     service: ProjectService = Depends(get_service),
     session: SessionContainer = Depends(verify_session())
 ):
-    return service.list_projects(session.get_user_id(), page=page, size=size)
+    return service.list_projects(session.get_user_id(), page=page, size=size, status=status)
 
 @router.get("/{project_id}", response_model=ProjectResponse)
 def get_project(

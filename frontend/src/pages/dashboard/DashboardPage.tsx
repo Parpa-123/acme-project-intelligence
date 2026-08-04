@@ -2,11 +2,37 @@ import { useDashboard } from '../../api/projects';
 import { Badge } from '../../components/ui/Badge';
 import { Link } from 'react-router-dom';
 import { FaProjectDiagram, FaEnvelopeOpenText } from 'react-icons/fa';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 export function DashboardPage() {
   const { data: dashboard, isLoading, error } = useDashboard();
 
-  if (isLoading) return <div className="text-gray-400 animate-pulse text-glow-sm">Loading dashboard...</div>;
+  if (isLoading) return (
+    <div className="space-y-8 pb-12">
+      <div>
+        <Skeleton className="h-8 w-48 rounded" />
+        <Skeleton className="h-4 w-96 mt-2 rounded" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="glass-panel p-6 rounded-2xl h-32">
+            <Skeleton className="h-4 w-24 rounded" />
+            <Skeleton className="h-8 w-12 mt-4 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-4">
+          <Skeleton className="h-6 w-32 rounded" />
+          <div className="glass-panel rounded-2xl h-64" />
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-6 w-40 rounded" />
+          <div className="glass-panel rounded-2xl h-64" />
+        </div>
+      </div>
+    </div>
+  );
   if (error || !dashboard) return <div className="text-red-400 text-glow-sm">Failed to load dashboard</div>;
 
   return (

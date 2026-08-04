@@ -114,5 +114,77 @@ class KnowledgeExplorer:
                     "score": c.score,
                     "meeting_title": title
                 })
-        
         return results
+
+    def pin_knowledge(self, project_id: int, text: str, user_id: int):
+        from src.knowledge.embedding import EmbeddingService
+        from datetime import datetime, timezone
+        
+        # 1. Ensure the "Manual Project Notebook" space exists
+        notebook_space = self.db.query(MeetingSpace).filter(
+            MeetingSpace.project_id == project_id,
+            MeetingSpace.name == "Project Knowledge Notebook"
+        ).first()
+        
+        if not notebook_space:
+            import uuid
+            notebook_space = MeetingSpace(
+                project_id=project_id,
+                created_by=user_id,
+                name="Project Knowledge Notebook",
+                description="Manual knowledge bits pinned from AI chat and other sources.",
+                livekit_room_name=f"notebook_{project_id}_{uuid.uuid4().hex[:8]}"
+            )
+            self.db.add(notebook_space)
+            self.db.flush()
+            
+        # 2. Ensure a meeting exists
+        notebook_meeting = self.db.query(Meeting).filter(
+            Meeting.meeting_space_id == notebook_space.id
+        ).first()
+        
+        if not notebook_meeting:
+            notebook_meeting = Meeting(
+                meeting_space_id=notebook_space.id,
+                created_by=user_id,
+                name="Pinned Knowledge",
+                status="completed"
+            )
+            self.db.add(notebook_meeting)
+            self.db.flush()
+            
+        # 3. Generate embedding
+        embed_service = EmbeddingService()
+        vector = embed_service.generate_embedding(text)
+        
+        # 4. Create KnowledgeChunk
+        now = datetime.now(timezone.utc)
+        chunk = KnowledgeChunk(
+            project_id=project_id,
+            meeting_id=notebook_meeting.id,
+            chunk_index=0,
+            start_timestamp=now,
+            end_timestamp=now,
+            text=text,
+            participant_ids=[],
+            entry_count=1,
+            embedding=vector
+        )
+        self.db.add(chunk)
+        self.db.commit()
+        self.db.refresh(chunk)
+        
+        chunk_dict = {
+            "id": chunk.id,
+            "meeting_id": chunk.meeting_id,
+            "chunk_index": chunk.chunk_index,
+            "start_timestamp": chunk.start_timestamp,
+            "end_timestamp": chunk.end_timestamp,
+            "text": chunk.text,
+            "participant_ids": chunk.participant_ids,
+            "entry_count": chunk.entry_count,
+            "created_at": chunk.created_at,
+            "meeting_title": notebook_meeting.name
+        }
+        return chunk_dict
+

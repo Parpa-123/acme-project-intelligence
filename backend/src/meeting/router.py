@@ -62,9 +62,12 @@ def create_meeting_space(
     
     return MeetingSpaceCreateResponse(id=space.id, join_url=join_url)
 
+from fastapi import Query
+
 @router.get("", response_model=List[MeetingSpaceListResponse])
 def list_meeting_spaces(
     project_id: int,
+    status: str = Query("active", description="Filter by status: active, archived, all"),
     db: Session = Depends(get_db),
     session: SessionContainer = Depends(verify_session())
 ):
@@ -73,7 +76,7 @@ def list_meeting_spaces(
     project_service._check_project_access(project_id, user.id)
     
     repo = MeetingSpaceRepository(db)
-    spaces = repo.get_meeting_spaces(project_id)
+    spaces = repo.get_meeting_spaces(project_id, status=status)
     return spaces
 
 def _get_join_url(room_name: str) -> str:
@@ -209,6 +212,29 @@ def archive_meeting_space(
         raise HTTPException(status_code=400, detail="Cannot archive a space with an active meeting in progress")
         
     repo.archive_meeting_space(space)
+    return None
+
+@space_router.post("/{space_id}/unarchive", status_code=204)
+def unarchive_meeting_space(
+    space_id: str,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    repo = MeetingSpaceRepository(db)
+    space = repo.get_meeting_space_by_id(space_id)
+    if not space:
+        raise HTTPException(status_code=404, detail="Meeting space not found")
+        
+    project_service = ProjectService(db)
+    user = project_service._get_user_by_supertokens_id(session.get_user_id())
+    # Require admin or owner role to unarchive
+    project_service._check_project_access(
+        space.project_id, 
+        user.id, 
+        require_role=[MemberRole.OWNER, MemberRole.ADMIN]
+    )
+    
+    repo.unarchive_meeting_space(space)
     return None
 
 @space_router.post("/{space_id}/publish", status_code=204)

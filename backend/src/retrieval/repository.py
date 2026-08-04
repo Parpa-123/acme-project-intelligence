@@ -22,14 +22,18 @@ class RetrievalRepository:
             q = self.db.query(KnowledgeChunk, distance_expr, MeetingSpace.id.label('space_id'))
             
             # Join required to verify project access
-            q = q.join(Meeting, Meeting.id == KnowledgeChunk.meeting_id)
-            q = q.join(MeetingSpace, MeetingSpace.id == Meeting.meeting_space_id)
+            from src.projects.models import Project
+            q = q.outerjoin(Meeting, Meeting.id == KnowledgeChunk.meeting_id)
+            q = q.outerjoin(MeetingSpace, MeetingSpace.id == Meeting.meeting_space_id)
+            q = q.join(Project, Project.id == KnowledgeChunk.project_id)
             
-            # Apply Mandatory Project Filter
+            # Apply Mandatory Project Filter (Target Project OR Global Projects)
             from sqlalchemy import or_
             q = q.filter(
-                MeetingSpace.project_id == filters.project_id, 
-                or_(MeetingSpace.is_archived == False, MeetingSpace.is_global == True)
+                or_(
+                    Project.id == filters.project_id,
+                    Project.is_global == True
+                )
             )
             
             # Apply Optional Filters
@@ -51,7 +55,7 @@ class RetrievalRepository:
             # Convert distance to similarity score (1 - distance)
             # pgvector's cosine_distance returns [0, 2], where 0 is identical.
             # So similarity = 1 - distance
-            return [(chunk, 1.0 - float(dist), str(space_id)) for chunk, dist, space_id in results]
+            return [(chunk, 1.0 - float(dist), str(space_id) if space_id else "") for chunk, dist, space_id in results]
             
         except Exception as e:
             print(f"Error in search_knowledge: {e}")

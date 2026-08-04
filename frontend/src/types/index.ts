@@ -26,6 +26,8 @@ export interface ProjectResponse {
   visibility: ProjectVisibility;
   created_at: string;
   updated_at: string | null;
+  is_archived: boolean;
+  is_global: boolean;
 }
 
 export interface ProjectMemberResponse {

@@ -17,6 +17,8 @@ import { AcceptInvitePage } from './pages/invites/AcceptInvite';
 import { MeetingPreJoin } from './pages/meetings/MeetingPreJoin';
 import { MeetingRoom } from './pages/meetings/MeetingRoom';
 import { MeetingIntelligence } from './pages/meetings/MeetingIntelligence';
+import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 SuperTokens.init({
   appInfo: {
@@ -43,9 +45,20 @@ SuperTokens.init({
 
 const App = () => {
   return (
-    <SuperTokensWrapper>
-      <BrowserRouter>
-        <Routes>
+    <ErrorBoundary>
+      <SuperTokensWrapper>
+        <BrowserRouter>
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              className: 'glass-panel !bg-[#1A1A1A] !text-white !border-white/10 !shadow-2xl',
+              style: {
+                backdropFilter: 'blur(16px)',
+                borderRadius: '1rem',
+              }
+            }} 
+          />
+          <Routes>
           {getSuperTokensRoutesForReactRouterDom(reactRouterDom, [ThirdPartyPreBuiltUI])}
           
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -93,6 +106,7 @@ const App = () => {
         </Routes>
       </BrowserRouter>
     </SuperTokensWrapper>
+    </ErrorBoundary>
   );
 };
 

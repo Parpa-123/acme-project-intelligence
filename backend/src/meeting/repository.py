@@ -27,11 +27,14 @@ class MeetingSpaceRepository:
         self.db.refresh(space)
         return space
 
-    def get_meeting_spaces(self, project_id: int) -> List[dict]:
-        spaces = self.db.query(MeetingSpace).filter(
-            MeetingSpace.project_id == project_id,
-            MeetingSpace.is_archived == False
-        ).all()
+    def get_meeting_spaces(self, project_id: int, status: str = "active") -> List[dict]:
+        query = self.db.query(MeetingSpace).filter(MeetingSpace.project_id == project_id)
+        if status == "active":
+            query = query.filter(MeetingSpace.is_archived == False)
+        elif status == "archived":
+            query = query.filter(MeetingSpace.is_archived == True)
+            
+        spaces = query.all()
         results = []
         for space in spaces:
             # Check if there's an active meeting
@@ -69,6 +72,10 @@ class MeetingSpaceRepository:
 
     def archive_meeting_space(self, space: MeetingSpace):
         space.is_archived = True
+        self.db.commit()
+
+    def unarchive_meeting_space(self, space: MeetingSpace):
+        space.is_archived = False
         self.db.commit()
 
     def publish_meeting_space(self, space: MeetingSpace):

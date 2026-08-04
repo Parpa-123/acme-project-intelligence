@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { FaBook, FaTimes, FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
+import { Dialog as HeadlessDialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
 import { KnowledgeExplorer } from './KnowledgeExplorer';
 
 interface KnowledgeDrawerProps {
@@ -11,18 +13,33 @@ interface KnowledgeDrawerProps {
 export function KnowledgeDrawer({ projectId, isOpen, onClose }: KnowledgeDrawerProps) {
   const [isExpanded, setIsExpanded] = useState(true); // Default to full width for explorer since it has a lot of content
 
-  if (!isOpen) return null;
-
   return (
-    <>
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity"
-        onClick={onClose}
-      />
-      
-      {/* Drawer */}
-      <div className={`fixed right-0 top-0 h-screen bg-black/80 backdrop-blur-xl border-l border-white/10 shadow-2xl z-50 flex flex-col transition-all duration-300 ease-in-out ${isExpanded ? 'w-full md:w-[90vw]' : 'w-full md:w-[60vw] lg:w-[50vw]'}`}>
+    <Transition show={isOpen} as={Fragment}>
+      <HeadlessDialog as="div" className="relative z-50" onClose={onClose}>
+        {/* Backdrop */}
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+        </Transition.Child>
+        
+        {/* Drawer */}
+        <Transition.Child
+          as={Fragment}
+          enter="transform transition ease-in-out duration-300"
+          enterFrom="translate-x-full"
+          enterTo="translate-x-0"
+          leave="transform transition ease-in-out duration-300"
+          leaveFrom="translate-x-0"
+          leaveTo="translate-x-full"
+        >
+          <HeadlessDialog.Panel className={`fixed right-0 top-0 h-screen bg-black/80 backdrop-blur-xl border-l border-white/10 shadow-2xl flex flex-col transition-all duration-300 ease-in-out ${isExpanded ? 'w-full md:w-[90vw]' : 'w-full md:w-[60vw] lg:w-[50vw]'}`}>
         
         {/* Drawer Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5 shrink-0">
@@ -59,7 +76,9 @@ export function KnowledgeDrawer({ projectId, isOpen, onClose }: KnowledgeDrawerP
                 <KnowledgeExplorer projectId={projectId} />
             </div>
         </div>
-      </div>
-    </>
+          </HeadlessDialog.Panel>
+        </Transition.Child>
+      </HeadlessDialog>
+    </Transition>
   );
 }

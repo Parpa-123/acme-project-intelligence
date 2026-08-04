@@ -18,11 +18,10 @@ import type { MeetingSpaceListResponse } from '../../../types';
 type CreateSpaceFormValues = z.infer<typeof createSpaceSchema>;
 
 function SpaceCard({ space, handleJoin }: { space: MeetingSpaceListResponse, handleJoin: (id: string) => void }) {
-
   return (
-    <div className="glass-panel p-6 rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.15)] transition-all flex flex-col h-full border border-white/10 hover:border-indigo-500/30 group cursor-pointer hover:-translate-y-1">
+    <div className="glass-panel p-6 rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.15)] transition-all flex flex-col h-full border border-white/10 hover:border-indigo-500/30 group">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => handleJoin(space.id)}>
           <div className="p-2 bg-indigo-500/20 rounded-xl ring-1 ring-indigo-500/30">
             <Video className="h-5 w-5 text-indigo-400 group-hover:scale-110 transition-transform" />
           </div>
@@ -35,8 +34,6 @@ function SpaceCard({ space, handleJoin }: { space: MeetingSpaceListResponse, han
           </span>
         )}
       </div>
-      
-      {/* History moved to Knowledge Tab */}
 
       <div className="mt-auto pt-6">
         <Button
