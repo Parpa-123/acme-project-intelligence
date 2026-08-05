@@ -11,6 +11,7 @@ import { ChatDrawer } from '../../features/ai-chat/ChatDrawer';
 import { KnowledgeDrawer } from '../../features/knowledge/KnowledgeDrawer';
 import { useSidebarStore } from '../../stores/useSidebarStore';
 import { ProjectWorkspaceSkeleton } from '../../components/ui/Skeleton';
+import { useChatStore } from '../../features/ai-chat/useChatStore';
 
 export function ProjectWorkspace() {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +20,7 @@ export function ProjectWorkspace() {
   const { data: dashboard, isLoading, error } = useProjectDashboard(projectId);
   const { data: currentUser } = useCurrentUser();
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'meetings' | 'archives' | 'settings'>('overview');
-  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const { isDrawerOpen: isCopilotOpen, setDrawerOpen: setIsCopilotOpen } = useChatStore();
   const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(false);
   const isSidebarOpen = useSidebarStore(state => state.isOpen);
   const setIsSidebarOpen = useSidebarStore(state => state.setIsOpen);

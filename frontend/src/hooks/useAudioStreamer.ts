@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export function useAudioStreamer(meetingId: string, isEnabled: boolean, language: string = 'en-IN', mode: string = 'transcribe') {
+export function useAudioStreamer(meetingId: string, isEnabled: boolean, userName: string, userId: string, language: string = 'en-IN', mode: string = 'transcribe') {
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
@@ -28,13 +28,14 @@ export function useAudioStreamer(meetingId: string, isEnabled: boolean, language
         const workletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
         workletNodeRef.current = workletNode;
 
-        const wsUrl = `ws://localhost:8000/meetings/${meetingId}/stt/ws?language=${language}&mode=${mode}`;
+        const wsUrl = `ws://localhost:8000/meetings/${meetingId}/stt/ws?language=${language}&mode=${mode}&user_name=${encodeURIComponent(userName)}&user_id=${encodeURIComponent(userId)}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
         ws.onopen = () => {
+          console.log("STT WebSocket OPENED!");
           source.connect(workletNode);
-          workletNode.connect(audioContext.destination);
+          // Do not connect to destination to prevent echo
           
           workletNode.port.onmessage = (event) => {
             if (ws.readyState === WebSocket.OPEN) {
@@ -43,8 +44,8 @@ export function useAudioStreamer(meetingId: string, isEnabled: boolean, language
           };
         };
 
-        ws.onclose = () => {
-          console.log("STT WebSocket closed");
+        ws.onclose = (event) => {
+          console.log(`STT WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`);
         };
 
       } catch (err) {
@@ -55,9 +56,12 @@ export function useAudioStreamer(meetingId: string, isEnabled: boolean, language
     startStreaming();
 
     return () => {
+      console.log("useAudioStreamer cleanup running! isEnabled:", isEnabled);
       isCleanedUp = true;
       if (wsRef.current) {
-        wsRef.current.send(JSON.stringify({ action: "close" }));
+        if (wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ action: "close" }));
+        }
         wsRef.current.close();
       }
       if (workletNodeRef.current) {
@@ -70,5 +74,5 @@ export function useAudioStreamer(meetingId: string, isEnabled: boolean, language
         mediaStreamRef.current.getTracks().forEach(t => t.stop());
       }
     };
-  }, [meetingId, isEnabled, language, mode]);
+  }, [meetingId, isEnabled, userName, userId, language, mode]);
 }

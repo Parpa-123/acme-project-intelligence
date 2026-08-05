@@ -188,3 +188,33 @@ class KnowledgeExplorer:
         }
         return chunk_dict
 
+    def unpin_knowledge(self, project_id: int, text: str):
+        # Delete the chunk that exactly matches the text in the notebook meeting
+        notebook_space = self.db.query(MeetingSpace).filter(
+            MeetingSpace.project_id == project_id,
+            MeetingSpace.name == "Project Knowledge Notebook"
+        ).first()
+        
+        if not notebook_space:
+            return {"success": True}
+            
+        notebook_meeting = self.db.query(Meeting).filter(
+            Meeting.meeting_space_id == notebook_space.id
+        ).first()
+        
+        if not notebook_meeting:
+            return {"success": True}
+            
+        chunks_to_delete = self.db.query(KnowledgeChunk).filter(
+            KnowledgeChunk.meeting_id == notebook_meeting.id,
+            KnowledgeChunk.text == text
+        ).all()
+        
+        for chunk in chunks_to_delete:
+            self.db.delete(chunk)
+            
+        if chunks_to_delete:
+            self.db.commit()
+            
+        return {"success": True}
+

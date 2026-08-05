@@ -16,6 +16,8 @@ import type {
   Summary,
 } from '../../api/knowledgeApi';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { useChatStore } from '../ai-chat/useChatStore';
+import { FaThumbtack } from 'react-icons/fa';
 
 interface KnowledgeExplorerProps {
   projectId: number;
@@ -40,6 +42,15 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
   const [activeView, setActiveView] = useState('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [executeSearch, setExecuteSearch] = useState(false);
+  const { setDrawerOpen, setPendingDiscussionText } = useChatStore();
+
+  const handleDiscuss = (text: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setPendingDiscussionText(text);
+    setDrawerOpen(true);
+  };
 
   // Queries
   const { data: chunksRes } = useKnowledgeChunks(projectId, undefined, 1);
@@ -126,7 +137,12 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
                         <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-md">
                           Score: {(res.score * 100).toFixed(1)}%
                         </span>
-                        <span className="text-xs text-gray-500">{res.meeting_title}</span>
+                        <div className="flex items-center gap-3">
+                          <button onClick={(e) => handleDiscuss(res.chunk.text, e)} className="text-emerald-400/70 hover:text-emerald-400 transition-colors" title="Discuss with AI">
+                            <FaThumbtack />
+                          </button>
+                          <span className="text-xs text-gray-500">{res.meeting_title}</span>
+                        </div>
                       </div>
                       <p className="text-gray-300 text-sm mt-3 group-hover:text-white transition-colors">{res.chunk.text}</p>
                     </div>
@@ -146,8 +162,11 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
                 <EmptyState icon={Presentation} title="No Knowledge Chunks" description="No transcripts or knowledge chunks found in this project." />
               ) : (
                 chunksRes?.items.map(chunk => (
-                  <div key={chunk.id} className="glass-panel p-4 rounded-xl border border-white/10 transition-all hover:bg-white/5">
-                    <p className="text-sm text-gray-300">{chunk.text}</p>
+                  <div key={chunk.id} className="glass-panel p-4 rounded-xl border border-white/10 transition-all hover:bg-white/5 relative group">
+                    <p className="text-sm text-gray-300 pr-8">{chunk.text}</p>
+                    <button onClick={(e) => handleDiscuss(chunk.text, e)} className="absolute top-4 right-4 text-emerald-400/50 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100" title="Discuss with AI">
+                      <FaThumbtack />
+                    </button>
                     <div className="mt-3 text-xs text-gray-500 flex justify-between">
                       <span>Meeting: {chunk.meeting_title || 'Unknown'}</span>
                       <span>{new Date(chunk.start_timestamp).toLocaleString()}</span>
@@ -165,9 +184,12 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
                 <EmptyState icon={BrainWrapper} title="No Decisions" description="AI hasn't extracted any decisions yet." className="col-span-full" />
               ) : (
                 decisionsRes?.items.map(d => (
-                  <div key={d.id} className="glass-panel p-5 rounded-xl border border-white/10 transition-all hover:-translate-y-1 hover:shadow-lg">
-                    <h3 className="font-bold text-white mb-2">{d.decision}</h3>
+                  <div key={d.id} className="glass-panel p-5 rounded-xl border border-white/10 transition-all hover:-translate-y-1 hover:shadow-lg relative group">
+                    <h3 className="font-bold text-white mb-2 pr-6">{d.decision}</h3>
                     <span className="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-md">Conf: {d.confidence}</span>
+                    <button onClick={(e) => handleDiscuss(`Decision: ${d.decision}`, e)} className="absolute top-4 right-4 text-emerald-400/50 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100" title="Discuss with AI">
+                      <FaThumbtack />
+                    </button>
                   </div>
                 ))
               )}
@@ -181,12 +203,15 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
                 <EmptyState icon={CheckWrapper} title="No Action Items" description="AI hasn't extracted any action items yet." className="col-span-full" />
               ) : (
                 actionItemsRes?.items.map(a => (
-                  <div key={a.id} className="glass-panel p-5 rounded-xl border border-white/10 transition-all hover:-translate-y-1 hover:shadow-lg">
-                    <h3 className="font-bold text-white mb-2">{a.description}</h3>
+                  <div key={a.id} className="glass-panel p-5 rounded-xl border border-white/10 transition-all hover:-translate-y-1 hover:shadow-lg relative group">
+                    <h3 className="font-bold text-white mb-2 pr-6">{a.description}</h3>
                     <div className="flex space-x-2 text-xs">
                       <span className="text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md">Assignee: {a.assignee || 'Unassigned'}</span>
                       <span className="text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md">Status: {a.status}</span>
                     </div>
+                    <button onClick={(e) => handleDiscuss(`Action Item: ${a.description}`, e)} className="absolute top-4 right-4 text-emerald-400/50 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100" title="Discuss with AI">
+                      <FaThumbtack />
+                    </button>
                   </div>
                 ))
               )}
@@ -200,9 +225,12 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
                 <EmptyState icon={ListWrapper} title="No Requirements" description="AI hasn't extracted any requirements yet." className="col-span-full" />
               ) : (
                 requirementsRes?.items.map(r => (
-                  <div key={r.id} className="glass-panel p-5 rounded-xl border border-white/10 transition-all hover:-translate-y-1 hover:shadow-lg">
-                    <h3 className="font-bold text-white mb-2">{r.requirement}</h3>
+                  <div key={r.id} className="glass-panel p-5 rounded-xl border border-white/10 transition-all hover:-translate-y-1 hover:shadow-lg relative group">
+                    <h3 className="font-bold text-white mb-2 pr-6">{r.requirement}</h3>
                     <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-1 rounded-md">Priority: {r.priority}</span>
+                    <button onClick={(e) => handleDiscuss(`Requirement: ${r.requirement}`, e)} className="absolute top-4 right-4 text-emerald-400/50 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100" title="Discuss with AI">
+                      <FaThumbtack />
+                    </button>
                   </div>
                 ))
               )}
@@ -216,9 +244,12 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
                 <EmptyState icon={AlertTriangle} title="No Concerns" description="AI hasn't extracted any concerns yet." className="col-span-full" />
               ) : (
                 concernsRes?.items.map(c => (
-                  <div key={c.id} className="glass-panel p-5 rounded-xl border border-white/10 border-l-2 border-l-red-500 transition-all hover:-translate-y-1 hover:shadow-lg">
-                    <h3 className="font-bold text-white mb-2">{c.concern}</h3>
+                  <div key={c.id} className="glass-panel p-5 rounded-xl border border-white/10 border-l-2 border-l-red-500 transition-all hover:-translate-y-1 hover:shadow-lg relative group">
+                    <h3 className="font-bold text-white mb-2 pr-6">{c.concern}</h3>
                     <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded-md">Severity: {c.severity}</span>
+                    <button onClick={(e) => handleDiscuss(`Concern: ${c.concern}`, e)} className="absolute top-4 right-4 text-emerald-400/50 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100" title="Discuss with AI">
+                      <FaThumbtack />
+                    </button>
                   </div>
                 ))
               )}
@@ -232,8 +263,11 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
                 <EmptyState icon={MessageSquare} title="No Topics" description="AI hasn't extracted any topics yet." className="col-span-full" />
               ) : (
                 topicsRes?.items.map(t => (
-                  <div key={t.id} className="glass-panel p-4 rounded-xl border border-white/10 flex items-center justify-center text-center transition-all hover:bg-white/5">
+                  <div key={t.id} className="glass-panel p-4 rounded-xl border border-white/10 flex items-center justify-between transition-all hover:bg-white/5 group">
                     <span className="font-bold text-white text-glow-sm">{t.topic}</span>
+                    <button onClick={(e) => handleDiscuss(`Topic: ${t.topic}`, e)} className="text-emerald-400/50 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100" title="Discuss with AI">
+                      <FaThumbtack />
+                    </button>
                   </div>
                 ))
               )}
@@ -247,9 +281,12 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
                 <EmptyState icon={FileText} title="No Summaries" description="AI hasn't generated any summaries yet." />
               ) : (
                 summariesRes?.items.map(s => (
-                  <div key={s.id} className="glass-panel p-6 rounded-xl border border-white/10 transition-all hover:bg-white/5">
+                  <div key={s.id} className="glass-panel p-6 rounded-xl border border-white/10 transition-all hover:bg-white/5 relative group">
                     <div className="mb-4 text-xs text-gray-500">Meeting Summary</div>
-                    <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{s.summary}</p>
+                    <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap pr-6">{s.summary}</p>
+                    <button onClick={(e) => handleDiscuss(`Summary: ${s.summary}`, e)} className="absolute top-6 right-6 text-emerald-400/50 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100" title="Discuss with AI">
+                      <FaThumbtack />
+                    </button>
                   </div>
                 ))
               )}

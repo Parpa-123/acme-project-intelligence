@@ -117,3 +117,17 @@ export const usePinKnowledge = (projectId: number) => {
     },
   });
 };
+
+export const useUnpinKnowledge = (projectId: number) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (text: string) => 
+      fetcher<{success: boolean}>(`/projects/${projectId}/knowledge/unpin`, {
+        method: 'POST',
+        body: JSON.stringify({ text }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['knowledge', projectId] });
+    },
+  });
+};

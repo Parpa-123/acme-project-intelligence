@@ -29,12 +29,21 @@ interface ChatStore {
   addMessage: (sessionId: string, message: ChatMessage) => void;
   updateMessage: (sessionId: string, messageId: string, updates: Partial<ChatMessage>) => void;
   clearMessages: (sessionId: string) => void;
+  isDrawerOpen: boolean;
+  setDrawerOpen: (isOpen: boolean) => void;
+  pendingDiscussionText: string | null;
+  setPendingDiscussionText: (text: string | null) => void;
 }
 
 export const useChatStore = create<ChatStore>((set) => ({
   activeSessionId: null,
   sessions: [],
   messages: {},
+  isDrawerOpen: false,
+  pendingDiscussionText: null,
+
+  setDrawerOpen: (isOpen) => set({ isDrawerOpen: isOpen }),
+  setPendingDiscussionText: (text) => set({ pendingDiscussionText: text }),
 
   setActiveSession: (id) => set({ activeSessionId: id }),
   

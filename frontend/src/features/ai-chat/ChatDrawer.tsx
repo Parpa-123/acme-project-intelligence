@@ -7,11 +7,13 @@ import { useStreamingChat } from './useStreamingChat';
 import { useChatStore } from './useChatStore';
 import type { ChatSession } from './useChatStore';
 import { FaPaperPlane, FaRobot, FaUser, FaCircleNotch, FaPlus, FaComment, FaTimes, FaExpandAlt, FaCompressAlt, FaCopy, FaCheck, FaThumbtack } from 'react-icons/fa';
-import { usePinKnowledge } from '../../api/knowledgeApi';
+import { usePinKnowledge, useUnpinKnowledge } from '../../api/knowledgeApi';
 
 const MessageActions = ({ text, projectId, role }: { text: string, projectId: number, role: string }) => {
   const [copied, setCopied] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
   const pinMutation = usePinKnowledge(projectId);
+  const unpinMutation = useUnpinKnowledge(projectId);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
@@ -19,8 +21,16 @@ const MessageActions = ({ text, projectId, role }: { text: string, projectId: nu
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handlePin = () => {
-    pinMutation.mutate(text);
+  const handlePinToggle = () => {
+    if (isPinned) {
+      unpinMutation.mutate(text, {
+        onSuccess: () => setIsPinned(false)
+      });
+    } else {
+      pinMutation.mutate(text, {
+        onSuccess: () => setIsPinned(true)
+      });
+    }
   };
 
   return (
@@ -30,12 +40,12 @@ const MessageActions = ({ text, projectId, role }: { text: string, projectId: nu
       </button>
       {role === 'assistant' && (
         <button 
-          onClick={handlePin} 
-          disabled={pinMutation.isPending || pinMutation.isSuccess}
-          className={`transition-colors p-1 ${pinMutation.isSuccess ? 'text-emerald-400' : 'text-gray-400 hover:text-indigo-400'}`} 
-          title={pinMutation.isSuccess ? "Pinned!" : "Pin to Knowledge Base"}
+          onClick={handlePinToggle} 
+          disabled={pinMutation.isPending || unpinMutation.isPending}
+          className={`transition-colors p-1 ${isPinned ? 'text-emerald-400' : 'text-gray-400 hover:text-indigo-400'}`} 
+          title={isPinned ? "Unpin from Knowledge Base" : "Pin to Knowledge Base"}
         >
-          {pinMutation.isPending ? <FaCircleNotch className="animate-spin" /> : <FaThumbtack />}
+          {pinMutation.isPending || unpinMutation.isPending ? <FaCircleNotch className="animate-spin" /> : <FaThumbtack />}
         </button>
       )}
     </div>
@@ -51,7 +61,7 @@ interface ChatDrawerProps {
 
 export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
   const { sendMessage, isStreaming } = useStreamingChat(projectId);
-  const { activeSessionId, setActiveSession, messages, setMessages } = useChatStore();
+  const { activeSessionId, setActiveSession, messages, setMessages, pendingDiscussionText, setPendingDiscussionText } = useChatStore();
   const [inputValue, setInputValue] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -92,6 +102,18 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
       setTimeout(scrollToBottom, 100);
     }
   }, [currentMessages, isStreaming, isOpen]);
+
+  // Handle auto-submission of pending knowledge discussion
+  useEffect(() => {
+    if (isOpen && pendingDiscussionText && !isStreaming) {
+      // If we don't have an active session (or it's 'new'), we want to send it so the hook can create one
+      // The sendMessage function handles creating a new session.
+      sendMessage(`Let's discuss this project knowledge:
+
+"${pendingDiscussionText}"`);
+      setPendingDiscussionText(null);
+    }
+  }, [isOpen, pendingDiscussionText, isStreaming, sendMessage, setPendingDiscussionText]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

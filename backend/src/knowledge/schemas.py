@@ -14,7 +14,7 @@ class KnowledgeChunkResponse(BaseModel):
     start_timestamp: datetime
     end_timestamp: datetime
     text: str
-    participant_ids: List[str]
+    participant_ids: List[int]
     entry_count: int
     created_at: datetime
     # Metadata mapped from DB if needed

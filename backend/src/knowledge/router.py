@@ -33,6 +33,17 @@ def pin_knowledge(
     explorer = KnowledgeExplorer(db)
     return explorer.pin_knowledge(project_id, request.text, user.id)
 
+@router.post("/unpin")
+def unpin_knowledge(
+    project_id: int,
+    request: PinKnowledgeRequest,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    verify_project_access(project_id, db, session)
+    explorer = KnowledgeExplorer(db)
+    return explorer.unpin_knowledge(project_id, request.text)
+
 @router.get("/search", response_model=List[SearchResultResponse])
 def search_knowledge(
     project_id: int,

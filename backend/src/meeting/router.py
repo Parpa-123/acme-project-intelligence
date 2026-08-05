@@ -519,6 +519,8 @@ async def websocket_stt_proxy(
     meeting_id: str, 
     language: str = "en-IN", 
     mode: str = "transcribe",
+    user_name: str = "Unknown User",
+    user_id: str = "",
     db: Session = Depends(get_db)
 ):
     await websocket.accept()
@@ -531,15 +533,11 @@ async def websocket_stt_proxy(
     room_name = meeting.meeting_space.livekit_room_name
     sarvam_key = os.environ.get("SARVAM_API_KEY")
     if not sarvam_key:
-        print("SARVAM_API_KEY missing")
+        print("\033[91m[STT Proxy] SARVAM_API_KEY missing. Closing connection.\033[0m")
         await websocket.close(code=1011, reason="Server error")
         return
 
-    # Resolve a user to attribute the transcript to (fallback to space creator)
-    from src.meeting.models import MeetingParticipant
-    participant = db.query(MeetingParticipant).filter(MeetingParticipant.meeting_id == meeting.id).first()
-    attributed_user = participant.user if participant else meeting.meeting_space.creator
-    user_name = attributed_user.full_name or attributed_user.email.split('@')[0]
+    print(f"\033[94m[STT Proxy] Starting session for room: {room_name} and user: {user_name}\033[0m")
 
     redis_host = os.environ.get("REDIS_HOST", "redis")
     redis_client = aioredis.Redis(host=redis_host, port=6379, db=0)
@@ -559,20 +557,28 @@ async def websocket_stt_proxy(
                                 if len(message["bytes"]) == 0:
                                     continue
 
+                                print(f"\033[93m[STT Proxy] Received {len(message['bytes'])} bytes from client, forwarding to Sarvam...\033[0m")
                                 import base64
                                 base64_audio = base64.b64encode(message["bytes"]).decode("utf-8")
                                 await sarvam_ws.send_json({
-                                    "audio": base64_audio
+                                    "audio": {
+                                        "data": base64_audio,
+                                        "encoding": "audio/wav",
+                                        "sample_rate": 16000
+                                    }
                                 })
                             elif "text" in message:
                                 data = json.loads(message["text"])
                                 if data.get("action") == "close":
+                                    print("\033[93m[STT Proxy] Client sent close action. Stopping.\033[0m")
                                     break
                     except WebSocketDisconnect:
+                        print("\033[92m[STT Proxy] Client WebSocket disconnected cleanly\033[0m")
                         pass
                     except Exception as e:
-                        print(f"Error reading from client: {e}")
+                        print(f"\033[91m[STT Proxy] Error reading from client: {e}\033[0m")
                     finally:
+                        print("\033[94m[STT Proxy] Exiting read_from_client loop\033[0m")
                         try:
                             await sarvam_ws.send_json({"action": "close"})
                         except:
@@ -587,6 +593,7 @@ async def websocket_stt_proxy(
                                 if data.get("type") == "data" and "transcript" in data.get("data", {}):
                                     transcript = data["data"]["transcript"].strip()
                                     if transcript:
+                                        print(f"\033[92m[STT Proxy] Transcript from Sarvam: '{transcript}'\033[0m")
                                         redis_event = {
                                             "type": "USER_TRANSCRIPT",
                                             "meeting_id": room_name,
@@ -594,6 +601,7 @@ async def websocket_stt_proxy(
                                             "payload": {
                                                 "speaker": "client",
                                                 "user_name": user_name,
+                                                "user_id": user_id,
                                                 "text": transcript,
                                                 "is_final": True
                                             }
@@ -638,17 +646,30 @@ async def websocket_stt_proxy(
                                         await redis_client.xadd("meeting.events", {"event": json.dumps(redis_event)})
                                 
                                 elif data.get("type") == "error":
-                                    print("❌ [STT] Sarvam Error:", data)
+                                    print(f"\033[91m[STT Proxy] ❌ Sarvam Error: {data}\033[0m")
+                            elif msg.type == aiohttp.WSMsgType.CLOSED:
+                                print("\033[91m[STT Proxy] Sarvam WebSocket closed by remote\033[0m")
+                            elif msg.type == aiohttp.WSMsgType.ERROR:
+                                print(f"\033[91m[STT Proxy] Sarvam WebSocket ERROR: {msg}\033[0m")
                     except Exception as e:
-                        print(f"Error reading from Sarvam: {e}")
+                        print(f"\033[91m[STT Proxy] Error reading from Sarvam: {e}\033[0m")
+                    finally:
+                        print("\033[94m[STT Proxy] Exiting read_from_sarvam loop\033[0m")
 
-                await asyncio.gather(
-                    read_from_client(),
-                    read_from_sarvam()
+                client_task = asyncio.create_task(read_from_client())
+                sarvam_task = asyncio.create_task(read_from_sarvam())
+                
+                done, pending = await asyncio.wait(
+                    [client_task, sarvam_task],
+                    return_when=asyncio.FIRST_COMPLETED
                 )
+                
+                for task in pending:
+                    task.cancel()
     except Exception as e:
-        print(f"STT Proxy error: {e}")
+        print(f"\033[91m[STT Proxy] Fatal Proxy error: {e}\033[0m")
     finally:
+        print("\033[94m[STT Proxy] Closing Redis and Client WebSocket.\033[0m")
         await redis_client.close()
         try:
             await websocket.close()

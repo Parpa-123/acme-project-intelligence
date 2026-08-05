@@ -20,7 +20,8 @@ async def send_project_invitation_email(ctx, email: str, inviter_name: str, proj
     Background task to send an email via Resend.
     """
     structlog.contextvars.bind_contextvars(email=email, project_name=project_name)
-    confirm_url = f"http://localhost:3000/accept-invite?token={token}"
+    web_url = os.environ.get("VITE_WEB_URL", "http://localhost:3000").rstrip("/")
+    confirm_url = f"{web_url}/invitations/{token}"
     html_content = f"""
     <div style="font-family: Arial, sans-serif; text-align: center; padding: 40px;">
         <h1>You have been invited!</h1>

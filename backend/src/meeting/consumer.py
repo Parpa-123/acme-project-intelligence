@@ -65,9 +65,17 @@ async def consume_meeting_events():
                                         meeting = db.query(Meeting).filter(Meeting.meeting_space_id == space.id).order_by(Meeting.started_at.desc()).first()
                                         if meeting:
                                             # 3. Resolve a user_id (fallback to creator if not found)
-                                            participant = db.query(MeetingParticipant).filter(MeetingParticipant.meeting_id == meeting.id).first()
-                                            user_id = participant.user_id if participant else space.creator_id
+                                            user_id = payload.get("user_id")
+                                            if not user_id:
+                                                participant = db.query(MeetingParticipant).filter(MeetingParticipant.meeting_id == meeting.id).first()
+                                                user_id = participant.user_id if participant else space.creator_id
                                             
+                                            # Convert user_id to int if necessary
+                                            try:
+                                                user_id = int(user_id)
+                                            except (ValueError, TypeError):
+                                                pass
+
                                             # 4. Insert the transcript
                                             transcript = MeetingTranscript(
                                                 meeting_id=meeting.id,
@@ -77,7 +85,7 @@ async def consume_meeting_events():
                                             )
                                             db.add(transcript)
                                             db.commit()
-                                            print(f"Saved transcript for meeting {meeting.id}: {text}")
+                                            print(f"Saved transcript for meeting {meeting.id} by user {user_id}: {text}")
                                 finally:
                                     db.close()
                                     

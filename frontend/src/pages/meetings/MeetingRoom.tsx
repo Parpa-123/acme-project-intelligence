@@ -16,6 +16,7 @@ import { useLeaveMeeting } from '../../api/meetings';
 import { RightSidebar } from './RightSidebar';
 import type { SidebarTab } from './RightSidebar';
 import { useAudioStreamer } from '../../hooks/useAudioStreamer';
+import { useCurrentUser } from '../../api/user';
 
 
 
@@ -63,6 +64,10 @@ export function MeetingRoom() {
 }
 
 function MeetingUI({ meetingId, onLeave }: { meetingId: string, onLeave: () => void }) {
+  const { data: user } = useCurrentUser();
+  const userName = user ? (user.full_name || user.email.split('@')[0]) : "Unknown User";
+  const userId = user ? user.id.toString() : "";
+
   const connectionState = useConnectionState();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<SidebarTab>('chat');
@@ -129,6 +134,8 @@ function MeetingUI({ meetingId, onLeave }: { meetingId: string, onLeave: () => v
           sttLanguage={sttLanguage}
           setSttLanguage={setSttLanguage}
           meetingId={meetingId}
+          userName={userName}
+          userId={userId}
         />
       </div>
 
@@ -155,7 +162,9 @@ function CustomControlBar({
   setSttMode,
   sttLanguage,
   setSttLanguage,
-  meetingId
+  meetingId,
+  userName,
+  userId
 }: { 
   isSidebarOpen: boolean; 
   activeTab: SidebarTab;
@@ -167,9 +176,11 @@ function CustomControlBar({
   sttLanguage: string;
   setSttLanguage: (lang: string) => void;
   meetingId: string;
+  userName: string;
+  userId: string;
 }) {
   
-  useAudioStreamer(meetingId, isTranscriptionEnabled, sttLanguage, sttMode);
+  useAudioStreamer(meetingId, isTranscriptionEnabled, userName, userId, sttLanguage, sttMode);
 
   return (
     <div className="lk-control-bar absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-xl border border-white/10 bg-[#111]/90 backdrop-blur">
