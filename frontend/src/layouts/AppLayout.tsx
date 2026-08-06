@@ -23,10 +23,10 @@ export function AppLayout() {
   ];
 
   return (
-    <div className="h-screen flex flex-col md:flex-row font-sans overflow-hidden bg-transparent">
+    <div className="min-h-screen flex flex-col md:flex-row font-sans bg-transparent">
       
       {/* Desktop Sidebar */}
-      <aside className={`hidden md:flex flex-col glass-panel z-30 transition-all duration-300 ease-in-out relative ${isOpen ? 'w-20 lg:w-64 border-r border-white/10' : 'w-0 border-none'}`}>
+      <aside className={`hidden md:flex flex-col glass-panel z-30 transition-all duration-300 ease-in-out sticky top-0 h-screen ${isOpen ? 'w-20 lg:w-64 border-r border-white/10' : 'w-0 border-none'}`}>
         
         {/* Sidebar Content (hidden when collapsed) */}
         <div className={`flex flex-col h-full overflow-hidden transition-all duration-300 whitespace-nowrap ${isOpen ? 'w-20 lg:w-64 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}>
@@ -67,10 +67,10 @@ export function AppLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 relative z-10">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10 min-h-screen">
         
         {/* Top Header */}
-        <header className="h-16 glass-panel border-b border-white/10 flex items-center justify-between px-4 md:px-8 z-20">
+        <header className="sticky top-0 h-16 glass-panel border-b border-white/10 flex items-center justify-between px-4 md:px-8 z-20 shrink-0">
           <div className="flex items-center gap-4">
             <div className="flex items-center md:hidden">
               <span className="font-bold text-lg text-white tracking-tight text-glow-sm">Acme Co.</span>
@@ -111,8 +111,8 @@ export function AppLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto pb-24 md:pb-8">
-          <div className="max-w-6xl mx-auto h-full">
+        <main className="flex-1 p-4 md:p-8 pb-24 md:pb-8">
+          <div className="max-w-6xl mx-auto">
             <Outlet />
           </div>
         </main>

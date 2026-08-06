@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetcher } from './client';
+import { fetcher, API_BASE_URL } from './client';
 import type { 
   ProjectResponse, 
   DashboardResponse, 
@@ -7,7 +7,8 @@ import type {
   ProjectMemberResponse,
   InvitationResponse,
   InvitationDetailsResponse,
-  PaginatedResponse
+  PaginatedResponse,
+  ProjectDocumentResponse
 } from '../types';
 
 // Dashboard
@@ -79,6 +80,55 @@ export function useDeleteProject() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
+
+
+// Documents
+export function useProjectDocuments(projectId: number) {
+  return useQuery({
+    queryKey: ['projectDocuments', projectId],
+    queryFn: () => fetcher<ProjectDocumentResponse[]>(`/projects/${projectId}/documents`),
+    enabled: !!projectId,
+  });
+}
+
+export function useUploadDocument(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Using standard fetch to bypass the JSON assumptions of our fetcher wrapper
+      // if fetcher adds Content-Type: application/json, it breaks multipart
+      const headers: HeadersInit = {};
+      
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/documents/upload`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to upload document');
+      }
+      return res.json() as Promise<ProjectDocumentResponse>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectDocuments', projectId] });
+    },
+  });
+}
+
+export function useDeleteDocument(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (documentId: string) => 
+      fetcher(`/projects/${projectId}/documents/${documentId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectDocuments', projectId] });
     },
   });
 }

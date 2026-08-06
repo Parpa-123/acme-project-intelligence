@@ -8,7 +8,9 @@ class RetrievalRequest(BaseModel):
 
 class RetrievalCandidate(BaseModel):
     chunk_id: str
-    meeting_id: str
+    meeting_id: Optional[str] = None
+    document_id: Optional[str] = None
+    source_type: str = "meeting"
     score: float
     text: str
     metadata: Dict[str, Any] = Field(default_factory=dict)

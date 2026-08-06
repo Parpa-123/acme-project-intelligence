@@ -167,11 +167,11 @@ class ProjectService:
             self.db.commit()
             
         # Dispatch the background email task
-        from src.arq_client import enqueue_arq_job
+        from src.arq_client import enqueue_arq_job_sync
         inviter_user = self.db.query(User).filter(User.id == inviter_user_id).first()
         inviter_name = inviter_user.full_name or inviter_user.email
         
-        enqueue_arq_job(
+        enqueue_arq_job_sync(
             "send_project_invitation_email",
             email=inv_in.email,
             inviter_name=inviter_name,

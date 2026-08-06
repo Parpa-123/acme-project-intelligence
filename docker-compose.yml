@@ -183,7 +183,7 @@ services:
 
   # 10. TEI Reranker
   reranker:
-    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.5
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.6
     container_name: reranker
     restart: unless-stopped
     command: --model-id BAAI/bge-reranker-base --port 8000

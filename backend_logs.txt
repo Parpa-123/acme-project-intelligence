@@ -1,0 +1,188 @@
+
+INFO:     Started server process [1]
+   FastAPI   Starting production server ≡ƒÜÇ
+ 
+             Searching for package file structure from directories with         
+             __init__.py files                                                  
+             Importing from /app
+ 
+    module   ≡ƒôü src            
+             Γö£ΓöÇΓöÇ ≡ƒÉì __init__.py
+             ΓööΓöÇΓöÇ ≡ƒÉì main.py    
+ 
+      code   Importing the FastAPI app object from the module with the following
+             code:                                                              
+ 
+             from src.main import app
+ 
+       app   Using import string: src.main:app
+ 
+      info   Configuration sources:
+              ΓÇó Module: path CLI argument
+              ΓÇó App name: auto-discovery
+ 
+    server   Server started at http://0.0.0.0:8000
+    server   Documentation at http://0.0.0.0:8000/docs
+ 
+             Logs:
+ 
+Started Redis Consumer for Meeting Transcripts...
+INFO:     172.18.0.1:54416 - "OPTIONS /projects/1/dashboard HTTP/1.1" 200 OK
+INFO:     172.18.0.1:54428 - "OPTIONS /api/me HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 488.95, "event": "Request completed", "method": "GET", "path": "/api/me", "request_id": "e3356debef0545358ca3c0f350ad2d39", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:32:20.834573Z"}
+INFO:     172.18.0.1:54448 - "GET /api/me HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 608.51, "event": "Request completed", "method": "GET", "path": "/projects/1/dashboard", "request_id": "b08e8540c3454cbcad18f53d7e00a2f7", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:32:20.927653Z"}
+INFO:     172.18.0.1:54440 - "GET /projects/1/dashboard HTTP/1.1" 200 OK
+INFO:     172.18.0.1:51026 - "OPTIONS /projects/1/chat/sessions HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 116.48, "event": "Request completed", "method": "GET", "path": "/projects/1/chat/sessions", "request_id": "b40c83878950478e8634cb71007da5be", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:32:26.507631Z"}
+INFO:     172.18.0.1:51038 - "GET /projects/1/chat/sessions HTTP/1.1" 200 OK
+INFO:     172.18.0.1:39738 - "OPTIONS /projects/1/knowledge/chunks?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:39750 - "OPTIONS /projects/1/knowledge/decisions?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:39760 - "OPTIONS /projects/1/knowledge/action-items?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:39738 - "OPTIONS /projects/1/knowledge/summaries?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:39764 - "OPTIONS /projects/1/knowledge/requirements?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:39776 - "OPTIONS /projects/1/knowledge/concerns?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:39790 - "OPTIONS /projects/1/knowledge/topics?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 187.08, "event": "Request completed", "method": "GET", "path": "/projects/1/knowledge/chunks", "request_id": "4d3987d036b340d3bccbec91de690863", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:32:40.058745Z"}
+INFO:     172.18.0.1:39794 - "GET /projects/1/knowledge/chunks?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 193.99, "event": "Request completed", "method": "GET", "path": "/projects/1/knowledge/decisions", "request_id": "9f8f8a4775874630b23d3262eac188f5", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:32:40.095611Z"}
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     172.18.0.1:39798 - "GET /projects/1/knowledge/decisions?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 244.35, "event": "Request completed", "method": "GET", "path": "/projects/1/knowledge/action-items", "request_id": "ecf645d2977348d98576859b9b65bf2e", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:32:40.156145Z"}
+INFO:     172.18.0.1:39806 - "GET /projects/1/knowledge/action-items?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 262.65, "event": "Request completed", "method": "GET", "path": "/projects/1/knowledge/summaries", "request_id": "9f773991afa7442c9ce0a266af552593", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:32:40.185945Z"}
+INFO:     172.18.0.1:39810 - "GET /projects/1/knowledge/summaries?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 294.51, "event": "Request completed", "method": "GET", "path": "/projects/1/knowledge/requirements", "request_id": "fb656f9b205742f38a698b921ed89fd7", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:32:40.227094Z"}
+{"status_code": 200, "process_time_ms": 287.7, "event": "Request completed", "method": "GET", "path": "/projects/1/knowledge/concerns", "request_id": "39a99e47f236473ea7ca89d1d570b36e", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:32:40.227788Z"}
+INFO:     172.18.0.1:39822 - "GET /projects/1/knowledge/requirements?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:39834 - "GET /projects/1/knowledge/concerns?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 156.81, "event": "Request completed", "method": "GET", "path": "/projects/1/knowledge/topics", "request_id": "a07994ce7f554c0e8811d6e625abecad", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:32:40.265192Z"}
+INFO:     172.18.0.1:39794 - "GET /projects/1/knowledge/topics?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 23.96, "event": "Request completed", "method": "GET", "path": "/api/me", "request_id": "0429f2621a8442b2bd46289fedfa2e34", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:03.008276Z"}
+INFO:     172.18.0.1:36206 - "GET /api/me HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 61.35, "event": "Request completed", "method": "GET", "path": "/projects/1/dashboard", "request_id": "cacbb71c4c49432b88fde604a057adea", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:03.042897Z"}
+INFO:     172.18.0.1:36202 - "GET /projects/1/dashboard HTTP/1.1" 200 OK
+INFO:     172.18.0.1:51008 - "OPTIONS /global-knowledge/decisions?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:51016 - "OPTIONS /global-knowledge/requirements?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:51028 - "OPTIONS /global-knowledge/action-items?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 106.82, "event": "Request completed", "method": "GET", "path": "/global-knowledge/action-items", "request_id": "f5c916f8a3cb44b2bf4bac6155f24395", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:06.334678Z"}
+INFO:     172.18.0.1:51044 - "GET /global-knowledge/action-items?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 119.26, "event": "Request completed", "method": "GET", "path": "/global-knowledge/requirements", "request_id": "6f94996e3dcb4ef2aea9257e523809da", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:06.338552Z"}
+INFO:     172.18.0.1:36206 - "GET /global-knowledge/requirements?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 160.8, "event": "Request completed", "method": "GET", "path": "/global-knowledge/decisions", "request_id": "39efd94c57e045348f8bca460231bf5f", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:06.347046Z"}
+INFO:     172.18.0.1:36202 - "GET /global-knowledge/decisions?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:51028 - "OPTIONS /projects?page=1&size=20&status=active HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 59.79, "event": "Request completed", "method": "GET", "path": "/projects", "request_id": "de1e2e829bea48819caac8969d4b75d0", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:07.523571Z"}
+INFO:     172.18.0.1:36202 - "GET /projects?page=1&size=20&status=active HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 22.18, "event": "Request completed", "method": "GET", "path": "/api/me", "request_id": "cb3e3a1d48a14a2b84992e4c2cb9a3aa", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:10.723155Z"}
+INFO:     172.18.0.1:36206 - "GET /api/me HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 62.98, "event": "Request completed", "method": "GET", "path": "/projects/1/dashboard", "request_id": "f8a7b76120f2483f8bdb70e2a71f7087", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:10.763248Z"}
+INFO:     172.18.0.1:36202 - "GET /projects/1/dashboard HTTP/1.1" 200 OK
+INFO:     172.18.0.1:51028 - "OPTIONS /projects/1/members HTTP/1.1" 200 OK
+INFO:     172.18.0.1:51056 - "OPTIONS /projects/1/invitations HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 55.02, "event": "Request completed", "method": "GET", "path": "/projects/1/members", "request_id": "d7e21d548243456fb27f8a6c0b00158b", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:12.107362Z"}
+INFO:     172.18.0.1:36202 - "GET /projects/1/members HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 52.32, "event": "Request completed", "method": "GET", "path": "/projects/1/invitations", "request_id": "6231d55a1edb4f4bbf3395a275db6461", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:12.114555Z"}
+INFO:     172.18.0.1:36206 - "GET /projects/1/invitations HTTP/1.1" 200 OK
+INFO:     172.18.0.1:51056 - "OPTIONS /projects/1/meeting-spaces HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 119.78, "event": "Request completed", "method": "GET", "path": "/projects/1/meeting-spaces", "request_id": "af6b31f905254cb79bcdf6f041ddcb38", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:13.785382Z"}
+INFO:     172.18.0.1:36206 - "GET /projects/1/meeting-spaces HTTP/1.1" 200 OK
+INFO:     172.18.0.1:51056 - "OPTIONS /projects/1/documents HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 50.75, "event": "Request completed", "method": "GET", "path": "/projects/1/documents", "request_id": "40621ceb9a9e4351a51c3b87794fddc4", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:33:15.289513Z"}
+INFO:     172.18.0.1:36206 - "GET /projects/1/documents HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 37.98, "event": "Request completed", "method": "GET", "path": "/api/me", "request_id": "5a4cb703fa934af4859530057c9e64ea", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:36:00.626775Z"}
+INFO:     172.18.0.1:46666 - "GET /api/me HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 77.12, "event": "Request completed", "method": "GET", "path": "/projects/1/dashboard", "request_id": "0f8c2c2761b84f82be08f498922f5ddf", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:36:00.660223Z"}
+INFO:     172.18.0.1:46656 - "GET /projects/1/dashboard HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 20.83, "event": "Request completed", "method": "GET", "path": "/projects/1/documents", "request_id": "acd674a5174f4653af46464c615dd097", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:36:04.365496Z"}
+INFO:     172.18.0.1:46656 - "GET /projects/1/documents HTTP/1.1" 200 OK
+{"status_code": 401, "process_time_ms": 4.66, "event": "Request completed", "method": "GET", "path": "/projects/1/documents", "request_id": "74620abb120f4c18a727b7ab3814d7c8", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:39:04.010206Z"}
+INFO:     172.18.0.1:54536 - "GET /projects/1/documents HTTP/1.1" 401 Unauthorized
+{"status_code": 404, "process_time_ms": 2.4, "event": "Request completed", "method": "GET", "path": "/nonexistent", "request_id": "a0563088f9b244fc9ebc9016245f5353", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:39:15.808615Z"}
+INFO:     172.18.0.1:38866 - "GET /nonexistent HTTP/1.1" 404 Not Found
+{"status_code": 401, "process_time_ms": 3.12, "event": "Request completed", "method": "GET", "path": "/projects/1/documents", "request_id": "a36ada4b95654d6fb132ae984082dd0e", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:40:15.500965Z"}
+INFO:     172.18.0.1:35264 - "GET /projects/1/documents HTTP/1.1" 401 Unauthorized
+{"status_code": 401, "process_time_ms": 16.69, "event": "Request completed", "method": "POST", "path": "/projects/1/documents/upload", "request_id": "17e596428d9741c8aa8d3bd0334559b0", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:40:40.073546Z"}
+INFO:     172.18.0.1:46920 - "POST /projects/1/documents/upload HTTP/1.1" 401 Unauthorized
+INFO:     172.18.0.1:44286 - "OPTIONS /api/me HTTP/1.1" 200 OK
+INFO:     172.18.0.1:44280 - "OPTIONS /projects/1/dashboard HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 241.77, "event": "Request completed", "method": "GET", "path": "/api/me", "request_id": "1311a841037c48648681d35ab1c1d638", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:42:22.336350Z"}
+INFO:     172.18.0.1:44290 - "GET /api/me HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 255.78, "event": "Request completed", "method": "GET", "path": "/projects/1/dashboard", "request_id": "16634d5e3fe9454791e9117e7de3c708", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:42:22.440504Z"}
+INFO:     172.18.0.1:44304 - "GET /projects/1/dashboard HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 49.62, "event": "Request completed", "method": "GET", "path": "/projects/1/documents", "request_id": "4997ddd6fb9f4169b1fc621bef260cf4", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:42:34.014017Z"}
+INFO:     172.18.0.1:38052 - "GET /projects/1/documents HTTP/1.1" 200 OK
+INFO:     172.18.0.1:53388 - "OPTIONS /projects/1/documents/upload HTTP/1.1" 200 OK
+{"status_code": 500, "process_time_ms": 5742.34, "event": "Request completed", "method": "POST", "path": "/projects/1/documents/upload", "request_id": "a6de0babfc11453a8a6a855af4af590f", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:42:56.074470Z"}
+INFO:     172.18.0.1:53400 - "POST /projects/1/documents/upload HTTP/1.1" 500 Internal Server Error
+INFO:     172.18.0.1:34248 - "OPTIONS /projects/dashboard HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 176.46, "event": "Request completed", "method": "GET", "path": "/projects/dashboard", "request_id": "d80872271cb34ff9a3122c6dc818363b", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:21.212981Z"}
+INFO:     172.18.0.1:34262 - "GET /projects/dashboard HTTP/1.1" 200 OK
+INFO:     172.18.0.1:34248 - "OPTIONS /projects?page=1&size=20&status=active HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 91.32, "event": "Request completed", "method": "GET", "path": "/projects", "request_id": "b7b1b39d6baf431ea336316d5d4146da", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:22.596140Z"}
+INFO:     172.18.0.1:34262 - "GET /projects?page=1&size=20&status=active HTTP/1.1" 200 OK
+INFO:     172.18.0.1:34248 - "OPTIONS /global-knowledge/decisions?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:44720 - "OPTIONS /global-knowledge/requirements?page=1 HTTP/1.1" 200 OK
+INFO:     172.18.0.1:44724 - "OPTIONS /global-knowledge/action-items?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 93.56, "event": "Request completed", "method": "GET", "path": "/global-knowledge/decisions", "request_id": "98fd74fca0f14dec852d231e65b88788", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:24.437334Z"}
+INFO:     172.18.0.1:34262 - "GET /global-knowledge/decisions?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 66.55, "event": "Request completed", "method": "GET", "path": "/global-knowledge/action-items", "request_id": "37a11dad65fc4d83b1225de9b5b3c5df", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:24.452078Z"}
+INFO:     172.18.0.1:44728 - "GET /global-knowledge/action-items?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 87.26, "event": "Request completed", "method": "GET", "path": "/global-knowledge/requirements", "request_id": "85870a777d924f0683690c3e983f7b3a", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:24.469615Z"}
+INFO:     172.18.0.1:44726 - "GET /global-knowledge/requirements?page=1 HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 34.54, "event": "Request completed", "method": "GET", "path": "/projects", "request_id": "64a44d9b4cb7454fb2f95d47d63a8021", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:25.764268Z"}
+INFO:     172.18.0.1:44726 - "GET /projects?page=1&size=20&status=active HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 26.31, "event": "Request completed", "method": "GET", "path": "/api/me", "request_id": "8bb76bd37f1b466c96970c2e61824d25", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:52.528872Z"}
+INFO:     172.18.0.1:39140 - "GET /api/me HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 65.94, "event": "Request completed", "method": "GET", "path": "/projects/1/dashboard", "request_id": "cae41a2dc63b42fe9fc9538f4e9e93ec", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:52.566465Z"}
+INFO:     172.18.0.1:39128 - "GET /projects/1/dashboard HTTP/1.1" 200 OK
+INFO:     172.18.0.1:46118 - "OPTIONS /projects/1/members HTTP/1.1" 200 OK
+INFO:     172.18.0.1:46122 - "OPTIONS /projects/1/invitations HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 48.72, "event": "Request completed", "method": "GET", "path": "/projects/1/members", "request_id": "b348def9f157430aa969b87cbea41c2d", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:54.733673Z"}
+INFO:     172.18.0.1:39128 - "GET /projects/1/members HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 52.13, "event": "Request completed", "method": "GET", "path": "/projects/1/invitations", "request_id": "5c50495d500c4809a8a858f4b0c59a0b", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:54.745320Z"}
+INFO:     172.18.0.1:39140 - "GET /projects/1/invitations HTTP/1.1" 200 OK
+INFO:     172.18.0.1:46122 - "OPTIONS /projects/1/meeting-spaces HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 62.6, "event": "Request completed", "method": "GET", "path": "/projects/1/meeting-spaces", "request_id": "aa5a1a2ca1224bd29c9a684f309c8be1", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:56.731795Z"}
+INFO:     172.18.0.1:39140 - "GET /projects/1/meeting-spaces HTTP/1.1" 200 OK
+INFO:     172.18.0.1:46122 - "OPTIONS /projects/1/documents HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 33.46, "event": "Request completed", "method": "GET", "path": "/projects/1/documents", "request_id": "fccb5e5c4a534a7a849b0bcc7fa1855e", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:43:58.230814Z"}
+INFO:     172.18.0.1:39140 - "GET /projects/1/documents HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 35.37, "event": "Request completed", "method": "GET", "path": "/projects/1/meeting-spaces", "request_id": "37330473fc81493ab4ce4b0b3eab276e", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:16.598625Z"}
+INFO:     172.18.0.1:35458 - "GET /projects/1/meeting-spaces HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 21.89, "event": "Request completed", "method": "GET", "path": "/projects/1/documents", "request_id": "4918b5a9823b41f19f78214982fa9db5", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:23.617932Z"}
+INFO:     172.18.0.1:55966 - "GET /projects/1/documents HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 39.73, "event": "Request completed", "method": "GET", "path": "/projects/1/meeting-spaces", "request_id": "7fa7b2338e6d435db59c99c0d2b4bb72", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:24.621431Z"}
+INFO:     172.18.0.1:55966 - "GET /projects/1/meeting-spaces HTTP/1.1" 200 OK
+INFO:     172.18.0.1:55982 - "OPTIONS /meeting-spaces/726684f8-df3b-4de5-adc5-da3fb2238d3d HTTP/1.1" 200 OK
+/app/.venv/lib/python3.13/site-packages/jwt/api_jwt.py:147: InsecureKeyLengthWarning: The HMAC key is 6 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+{"status_code": 200, "process_time_ms": 100.41, "event": "Request completed", "method": "GET", "path": "/meeting-spaces/726684f8-df3b-4de5-adc5-da3fb2238d3d", "request_id": "6b68288d30804ca99520463c9a52eec0", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:26.377255Z"}
+INFO:     172.18.0.1:55966 - "GET /meeting-spaces/726684f8-df3b-4de5-adc5-da3fb2238d3d HTTP/1.1" 200 OK
+INFO:     172.18.0.1:55982 - "OPTIONS /meeting-spaces/726684f8-df3b-4de5-adc5-da3fb2238d3d/join HTTP/1.1" 200 OK
+  return self._jws.encode(
+{"status_code": 200, "process_time_ms": 3180.38, "event": "Request completed", "method": "POST", "path": "/meeting-spaces/726684f8-df3b-4de5-adc5-da3fb2238d3d/join", "request_id": "c4b14a06684b4dc788f05574f537c6d4", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:32.100740Z"}
+INFO:     172.18.0.1:55966 - "POST /meeting-spaces/726684f8-df3b-4de5-adc5-da3fb2238d3d/join HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 10.39, "event": "Request completed", "method": "GET", "path": "/api/me", "request_id": "56ae2ec7bcff4b64a82456c9b4748118", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:32.644006Z"}
+INFO:     172.18.0.1:55828 - "WebSocket /meetings/4a8d2c7c-e236-40ff-a129-b5a4d807d651/transcript/ws" [accepted]
+INFO:     connection open
+INFO:     172.18.0.1:55966 - "GET /api/me HTTP/1.1" 200 OK
+INFO:     172.18.0.1:55830 - "OPTIONS /meetings/4a8d2c7c-e236-40ff-a129-b5a4d807d651/messages HTTP/1.1" 200 OK
+INFO:     172.18.0.1:55842 - "OPTIONS /meetings/4a8d2c7c-e236-40ff-a129-b5a4d807d651/transcript HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 118.89, "event": "Request completed", "method": "GET", "path": "/meetings/4a8d2c7c-e236-40ff-a129-b5a4d807d651/messages", "request_id": "99b54ede615345f0b1f719015126d5c4", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:34.280535Z"}
+INFO:     172.18.0.1:55966 - "GET /meetings/4a8d2c7c-e236-40ff-a129-b5a4d807d651/messages HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 137.33, "event": "Request completed", "method": "GET", "path": "/meetings/4a8d2c7c-e236-40ff-a129-b5a4d807d651/transcript", "request_id": "4bc206e73d5a4211af95f5fa3b82ce2c", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:34.357613Z"}
+INFO:     172.18.0.1:55854 - "GET /meetings/4a8d2c7c-e236-40ff-a129-b5a4d807d651/transcript HTTP/1.1" 200 OK
+INFO:     172.18.0.1:38654 - "OPTIONS /meetings/4a8d2c7c-e236-40ff-a129-b5a4d807d651/leave HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 100.59, "event": "Request completed", "method": "POST", "path": "/meetings/4a8d2c7c-e236-40ff-a129-b5a4d807d651/leave", "request_id": "7ded0858aa744ae5a38357bba46135e8", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:44.210475Z"}
+INFO:     172.18.0.1:38668 - "POST /meetings/4a8d2c7c-e236-40ff-a129-b5a4d807d651/leave HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 31.02, "event": "Request completed", "method": "GET", "path": "/api/me", "request_id": "62db042a4d204503b82949d39811c676", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:44.351937Z"}
+INFO:     172.18.0.1:38682 - "GET /api/me HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 71.85, "event": "Request completed", "method": "GET", "path": "/projects/1/dashboard", "request_id": "0f23d144736d4df984371c7a658fefce", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:44.382329Z"}
+INFO:     172.18.0.1:38668 - "GET /projects/1/dashboard HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 18.27, "event": "Request completed", "method": "GET", "path": "/projects/1/documents", "request_id": "1a2c973583124ef394e50031aef1f2dc", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:46.627798Z"}
+INFO:     172.18.0.1:38668 - "GET /projects/1/documents HTTP/1.1" 200 OK
+INFO:     172.18.0.1:38654 - "OPTIONS /projects/1/chat/sessions HTTP/1.1" 200 OK
+{"status_code": 200, "process_time_ms": 64.95, "event": "Request completed", "method": "GET", "path": "/projects/1/chat/sessions", "request_id": "41b1a1f64cb44d048c6032d8a416f343", "logger": "api", "level": "info", "timestamp": "2026-08-06T05:44:48.839961Z"}
+INFO:     172.18.0.1:38668 - "GET /projects/1/chat/sessions HTTP/1.1" 200 OK

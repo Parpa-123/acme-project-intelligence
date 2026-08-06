@@ -132,13 +132,13 @@ export function ProjectMembersTab({
       </div>
 
       {/* Pending Invitations */}
-      {isAdmin && invitations && invitations.length > 0 && (
+      {isAdmin && invitations && invitations.some(inv => inv.status === 'pending') && (
         <div className="glass-panel rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.3)] overflow-hidden border border-white/10 mt-8">
           <div className="px-6 py-5 border-b border-white/10 bg-[#0A0A0A]">
             <h2 className="text-xl font-bold text-white text-glow-md">Pending Invitations</h2>
           </div>
           <ul className="divide-y divide-white/10">
-            {invitations.map((inv) => (
+            {invitations.filter(inv => inv.status === 'pending').map((inv) => (
               <li key={inv.id} className="p-6 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-white text-glow-sm">{inv.email}</p>

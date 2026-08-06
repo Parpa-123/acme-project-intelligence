@@ -39,7 +39,7 @@ async def send_project_invitation_email(ctx, email: str, inviter_name: str, proj
     try:
         logger.info("Sending email...")
         result = resend.Emails.send({
-            "from": os.environ.get("EMAIL_FROM", "Acme <onboarding@resend.dev>"),
+            "from": os.environ.get("EMAIL_FROM", "Acme <notifications@blos-acme-conf.website>"),
             "to": [email],
             "subject": f"Invitation to join {project_name}",
             "html": html_content,
@@ -53,9 +53,10 @@ async def send_project_invitation_email(ctx, email: str, inviter_name: str, proj
 
 from src.knowledge.worker import process_meeting_knowledge
 from src.enrichment.worker import enrich_meeting
+from src.documents.worker import process_document_pipeline, delete_document_pipeline
 
 class WorkerSettings:
-    functions = [send_project_invitation_email, process_meeting_knowledge, enrich_meeting]
+    functions = [send_project_invitation_email, process_meeting_knowledge, enrich_meeting, process_document_pipeline, delete_document_pipeline]
     job_timeout = 3600  # Allow long running tasks (1 hour)
     max_tries = 3
     

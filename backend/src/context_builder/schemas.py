@@ -1,12 +1,13 @@
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 class ContextSource(BaseModel):
     chunk_id: str
-    meeting_id: str
-    chunk_index: int
-    score: float
-    rerank_score: float
+    meeting_id: Optional[str] = None
+    document_id: Optional[str] = None
+    chunk_index: Optional[int] = None
+    score: Optional[float] = None
+    rerank_score: Optional[float] = None
 
 class ContextPackage(BaseModel):
     context_text: str

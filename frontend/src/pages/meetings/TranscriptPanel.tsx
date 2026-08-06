@@ -14,7 +14,8 @@ export function TranscriptPanel({ meetingId }: { meetingId: string }) {
   useEffect(() => {
     if (!meetingId) return;
 
-    const ws = new WebSocket(`ws://localhost:8000/meetings/${meetingId}/transcript/ws`);
+    const WS_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/^http/, 'ws');
+    const ws = new WebSocket(`${WS_BASE_URL}/meetings/${meetingId}/transcript/ws`);
     wsRef.current = ws;
 
     ws.onmessage = (event) => {

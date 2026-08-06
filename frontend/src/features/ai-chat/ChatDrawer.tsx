@@ -2,12 +2,13 @@ import React, { useRef, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Dialog as HeadlessDialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStreamingChat } from './useStreamingChat';
 import { useChatStore } from './useChatStore';
 import type { ChatSession } from './useChatStore';
-import { FaPaperPlane, FaRobot, FaUser, FaCircleNotch, FaPlus, FaComment, FaTimes, FaExpandAlt, FaCompressAlt, FaCopy, FaCheck, FaThumbtack } from 'react-icons/fa';
+import { FaPaperPlane, FaRobot, FaUser, FaCircleNotch, FaPlus, FaComment, FaTimes, FaExpandAlt, FaCompressAlt, FaCopy, FaCheck, FaThumbtack, FaTrash } from 'react-icons/fa';
 import { usePinKnowledge, useUnpinKnowledge } from '../../api/knowledgeApi';
+import { toast } from 'react-hot-toast';
 
 const MessageActions = ({ text, projectId, role }: { text: string, projectId: number, role: string }) => {
   const [copied, setCopied] = useState(false);
@@ -64,7 +65,31 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
   const { activeSessionId, setActiveSession, messages, setMessages, pendingDiscussionText, setPendingDiscussionText } = useChatStore();
   const [inputValue, setInputValue] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (sessionId: string) => {
+      const res = await fetch(`http://localhost:8000/projects/${projectId}/chat/sessions/${sessionId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete session');
+      return sessionId;
+    },
+    onSuccess: (deletedSessionId) => {
+      queryClient.invalidateQueries({ queryKey: ['chatSessions', projectId] });
+      if (activeSessionId === deletedSessionId) {
+        setActiveSession(null);
+      }
+      setSessionToDelete(null);
+      toast.success('Chat deleted successfully');
+    },
+    onError: () => {
+      toast.error('Failed to delete chat');
+      setSessionToDelete(null);
+    }
+  });
 
   // Fetch Sessions
   const { data: sessions = [], isLoading: loadingSessions } = useQuery({
@@ -207,16 +232,28 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
                   <button
                     key={session.id}
                     onClick={() => setActiveSession(session.id)}
-                    className={`w-full text-left p-2 md:p-3 rounded-xl transition-colors flex flex-col gap-1 ${
+                    className={`w-full text-left p-2 md:p-3 rounded-xl transition-colors flex flex-col gap-1 group ${
                       activeSessionId === session.id 
                         ? 'bg-emerald-500/20 border border-emerald-500/30 text-white' 
                         : 'hover:bg-white/5 border border-transparent text-gray-400'
                     }`}
                     title={session.title || 'Chat Session'}
                   >
-                    <div className="flex items-center justify-center md:justify-start gap-2 font-medium text-sm truncate">
-                      <FaComment className={activeSessionId === session.id ? 'text-emerald-400' : 'text-gray-500'} />
-                      <span className="truncate hidden md:inline">{session.title || 'Chat Session'}</span>
+                    <div className="flex items-center justify-between font-medium text-sm w-full">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <FaComment className={activeSessionId === session.id ? 'text-emerald-400' : 'text-gray-500'} />
+                        <span className="truncate hidden md:inline">{session.title || 'Chat Session'}</span>
+                      </div>
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSessionToDelete(session.id);
+                        }}
+                        className={`p-1.5 rounded-lg opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-500/20 text-red-400 hover:text-red-300 ${activeSessionId === session.id ? 'opacity-100' : ''}`}
+                        title="Delete chat"
+                      >
+                        <FaTrash className="text-xs" />
+                      </div>
                     </div>
                   </button>
                 ))
@@ -310,6 +347,68 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
         </div>
           </HeadlessDialog.Panel>
         </Transition.Child>
+
+        {/* Delete Confirmation Modal */}
+        <Transition show={!!sessionToDelete} as={Fragment}>
+          <HeadlessDialog as="div" className="relative z-[60]" onClose={() => setSessionToDelete(null)}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+            </Transition.Child>
+
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <HeadlessDialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-[#1A1A1A] p-6 text-left align-middle shadow-xl transition-all border border-white/10">
+                    <HeadlessDialog.Title as="h3" className="text-lg font-bold leading-6 text-white flex items-center gap-2">
+                      <FaTrash className="text-red-400" /> Delete Chat Session
+                    </HeadlessDialog.Title>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-400">
+                        Are you sure you want to delete this chat session? This action cannot be undone.
+                      </p>
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                      <button
+                        type="button"
+                        className="inline-flex justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 transition-colors"
+                        onClick={() => setSessionToDelete(null)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="inline-flex justify-center rounded-xl border border-transparent bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/30 border-red-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 transition-colors"
+                        onClick={() => {
+                          if (sessionToDelete) deleteSessionMutation.mutate(sessionToDelete);
+                        }}
+                        disabled={deleteSessionMutation.isPending}
+                      >
+                        {deleteSessionMutation.isPending ? <FaCircleNotch className="animate-spin" /> : 'Delete Chat'}
+                      </button>
+                    </div>
+                  </HeadlessDialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </HeadlessDialog>
+        </Transition>
       </HeadlessDialog>
     </Transition>
   );

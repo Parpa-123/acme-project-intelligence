@@ -53,3 +53,4 @@ from src.projects.models import Project, ProjectMembers, ProjectInvitation
 from src.knowledge.models import KnowledgeChunk
 from src.enrichment.models import MeetingSummary, MeetingDecision, MeetingActionItem, MeetingRequirement, MeetingConcern, MeetingTopic
 from src.ai_chat.models import ChatSession, ChatMessage
+from src.documents.models import ProjectDocument

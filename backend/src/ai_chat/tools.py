@@ -122,6 +122,8 @@ async def execute_tool(tool_name: str, arguments: str, db: Session, project_id: 
             RerankedChunk(
                 chunk_id=c.chunk_id,
                 meeting_id=c.meeting_id,
+                document_id=getattr(c, 'document_id', None),
+                source_type=getattr(c, 'source_type', 'meeting'),
                 text=c.text,
                 score=c.score,
                 rerank_score=0.0,

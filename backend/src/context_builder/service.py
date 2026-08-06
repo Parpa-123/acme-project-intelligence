@@ -17,8 +17,12 @@ class ContextBuilderService:
         Takes reranked chunks and builds a cohesive context package for LLM consumption.
         """
         try:
+            # Separate meeting and document chunks
+            meeting_chunks = [c for c in reranked_chunks if getattr(c, 'source_type', 'meeting') == 'meeting']
+            document_chunks = [c for c in reranked_chunks if getattr(c, 'source_type', 'meeting') == 'document']
+            
             # 1. Expand Neighbors (fetching DB chunks)
-            expanded_db_chunks = self.assembler.expand_neighbors(reranked_chunks)
+            expanded_db_chunks = self.assembler.expand_neighbors(meeting_chunks)
             
             # 2. Deduplicate and Sort chronologically
             sorted_unique_chunks = self.assembler.deduplicate_and_sort(expanded_db_chunks)
@@ -26,9 +30,30 @@ class ContextBuilderService:
             # 3. Assemble string and enforce token budget
             context_text, total_tokens, sources = self.assembler.build_context_string(
                 sorted_unique_chunks, 
-                reranked_chunks, 
+                meeting_chunks, 
                 max_tokens=max_tokens
             )
+            
+            # 4. Append Document Chunks
+            doc_context_blocks = []
+            for doc in document_chunks:
+                chunk_tokens = self.assembler.estimate_tokens(doc.text)
+                if total_tokens + chunk_tokens > max_tokens:
+                    break
+                
+                filename = doc.metadata.get("filename", "Unknown Document")
+                doc_context_blocks.append(f"\n\n--- [Document Source: {filename}] ---\n{doc.text}\n")
+                total_tokens += chunk_tokens
+                
+                sources.append({
+                    "chunk_id": doc.chunk_id,
+                    "document_id": getattr(doc, 'document_id', None),
+                    "score": doc.score,
+                    "rerank_score": getattr(doc, 'rerank_score', 0.0)
+                })
+                
+            if doc_context_blocks:
+                context_text += "".join(doc_context_blocks)
             
             return ContextPackage(
                 context_text=context_text,

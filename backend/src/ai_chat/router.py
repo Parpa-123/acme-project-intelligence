@@ -71,3 +71,28 @@ def get_chat_session_messages(
         raise HTTPException(status_code=404, detail="Chat session not found")
         
     return repo.get_messages(session_id)
+
+@router.delete("/sessions/{session_id}")
+def delete_chat_session(
+    project_id: int,
+    session_id: str,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    # Verify Project Access
+    project_service = ProjectService(db)
+    user = project_service._get_user_by_supertokens_id(session.get_user_id())
+    project_service._check_project_access(project_id, user.id)
+    
+    repo = ChatRepository(db)
+    
+    # Verify session belongs to project
+    chat_session = repo.get_session(session_id)
+    if not chat_session or chat_session.project_id != project_id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Chat session not found")
+        
+    # Delete the session. The associated messages will have session_id set to NULL due to SET NULL cascade.
+    db.delete(chat_session)
+    db.commit()
+    return {"message": "Chat session deleted"}

@@ -125,3 +125,14 @@ prometheus-fastapi-instrumentator
 prometheus-client
 fastapi-cache2[redis]==0.2.2
 tenacity
+llama-index
+pinecone
+llama-index-vector-stores-pinecone
+pinecone                                                                             
+llama-index-core                                                                            
+llama-index-vector-stores-pinecone                                                          
+llama-index-readers-file                                                                    
+PyMuPDF   
+python-docx
+minio
+boto3

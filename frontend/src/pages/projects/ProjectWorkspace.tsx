@@ -3,10 +3,11 @@ import { useParams, Navigate } from 'react-router-dom';
 import { useProjectDashboard } from '../../api/projects';
 import { useCurrentUser } from '../../api/user';
 import { Badge } from '../../components/ui/Badge';
-import { FaUsers, FaEnvelope, FaCog, FaCalendar, FaBook, FaRobot } from 'react-icons/fa';
+import { FaUsers, FaEnvelope, FaCog, FaCalendar, FaBook, FaRobot, FaFileAlt } from 'react-icons/fa';
 import { ProjectSettingsTab } from './tabs/ProjectSettingsTab';
 import { ProjectMembersTab } from './tabs/ProjectMembersTab';
 import { ProjectMeetingsTab } from './tabs/ProjectMeetingsTab';
+import { ProjectDocumentsTab } from './tabs/ProjectDocumentsTab';
 import { ChatDrawer } from '../../features/ai-chat/ChatDrawer';
 import { KnowledgeDrawer } from '../../features/knowledge/KnowledgeDrawer';
 import { useSidebarStore } from '../../stores/useSidebarStore';
@@ -19,7 +20,7 @@ export function ProjectWorkspace() {
   
   const { data: dashboard, isLoading, error } = useProjectDashboard(projectId);
   const { data: currentUser } = useCurrentUser();
-  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'meetings' | 'archives' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'documents' | 'members' | 'meetings' | 'archives' | 'settings'>('overview');
   const { isDrawerOpen: isCopilotOpen, setDrawerOpen: setIsCopilotOpen } = useChatStore();
   const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(false);
   const isSidebarOpen = useSidebarStore(state => state.isOpen);
@@ -104,7 +105,7 @@ export function ProjectWorkspace() {
       {/* Tabs */}
       <div className="border-b border-white/10 overflow-x-auto no-scrollbar">
         <nav className="-mb-px flex space-x-8 min-w-max">
-          {(['overview', 'members', 'meetings', 'settings'] as const).map((tab) => {
+          {(['overview', 'documents', 'members', 'meetings', 'settings'] as const).map((tab) => {
             // Hide settings tab if not admin
             if (tab === 'settings' && !isAdmin) return null;
             
@@ -122,6 +123,7 @@ export function ProjectWorkspace() {
               >
                 {tab === 'settings' && <FaCog className="mr-2" />}
                 {tab === 'meetings' && <FaCalendar className="mr-2" />}
+                {tab === 'documents' && <FaFileAlt className="mr-2" />}
                 {tab}
               </button>
             );
@@ -142,6 +144,10 @@ export function ProjectWorkspace() {
               </div>
             </div>
           </div>
+        )}
+
+        {activeTab === 'documents' && (
+          <ProjectDocumentsTab projectId={projectId} />
         )}
 
         {activeTab === 'members' && (

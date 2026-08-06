@@ -76,6 +76,17 @@ export interface InvitationDetailsResponse {
   created_at: string;
 }
 
+export interface ProjectDocumentResponse {
+  id: string;
+  project_id: number;
+  filename: string;
+  file_type: string;
+  s3_key: string;
+  status: 'processing' | 'ready' | 'error' | 'deleting';
+  created_at: string;
+}
+
+
 export interface MeetingSpaceListResponse {
   id: string;
   name: string;
