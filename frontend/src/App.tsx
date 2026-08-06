@@ -23,8 +23,8 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary';
 SuperTokens.init({
   appInfo: {
     appName: 'Project-1',
-    apiDomain: 'http://localhost:8000',
-    websiteDomain: 'http://localhost:3000',
+    apiDomain: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+    websiteDomain: import.meta.env.VITE_WEB_URL || 'http://localhost:3000',
     apiBasePath: '/auth',
     websiteBasePath: '/auth',
   },
