@@ -3,6 +3,7 @@ import { signOut } from 'supertokens-auth-react/recipe/session';
 import { FaProjectDiagram, FaHome, FaCog, FaSignOutAlt, FaGlobe } from 'react-icons/fa';
 import { useCurrentUser } from '../api/user';
 import { DropdownMenu, DropdownMenuItem } from '../components/ui/DropdownMenu';
+import { LuminaLogo } from '../components/ui/Logo';
 import { useSidebarStore } from '../stores/useSidebarStore';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
@@ -31,8 +32,10 @@ export function AppLayout() {
         {/* Sidebar Content (hidden when collapsed) */}
         <div className={`flex flex-col h-full overflow-hidden transition-all duration-300 whitespace-nowrap ${isOpen ? 'w-20 lg:w-64 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}>
           <div className="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-white/10 shrink-0">
-          <span className="font-bold text-xl text-white tracking-tight text-glow-md hidden lg:block">Acme Co.</span>
-          <span className="font-bold text-xl text-white tracking-tight text-glow-md lg:hidden">A</span>
+          <div className="flex items-center gap-2">
+            <LuminaLogo className="w-6 h-6 lg:w-7 lg:h-7 shrink-0" />
+            <span className="font-extrabold text-lg lg:text-xl text-white tracking-tight text-glow-md hidden lg:block">Lumina</span>
+          </div>
         </div>
         <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
@@ -73,7 +76,8 @@ export function AppLayout() {
         <header className="sticky top-0 h-16 glass-panel border-b border-white/10 flex items-center justify-between px-4 md:px-8 z-20 shrink-0">
           <div className="flex items-center gap-4">
             <div className="flex items-center md:hidden">
-              <span className="font-bold text-lg text-white tracking-tight text-glow-sm">Acme Co.</span>
+              <LuminaLogo className="w-6 h-6 mr-2 shrink-0" />
+              <span className="font-bold text-lg text-white tracking-tight text-glow-sm">Lumina</span>
             </div>
           </div>
           <div className="hidden md:flex items-center text-sm text-gray-400">
