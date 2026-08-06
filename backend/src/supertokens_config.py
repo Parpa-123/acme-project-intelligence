@@ -147,8 +147,8 @@ def init_supertokens() -> None:
                 )
             ),
             session.init(
-                cookie_secure=os.environ.get("COOKIE_SECURE", "false").lower() == "true",
-                cookie_same_site="lax",
+                cookie_secure=os.environ.get("COOKIE_SECURE", "true").lower() == "true",
+                cookie_same_site=os.environ.get("COOKIE_SAME_SITE", "none"),
             ),
         ],
     )

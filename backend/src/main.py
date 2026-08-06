@@ -101,7 +101,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # get_all_cors_headers() returns the extra headers SuperTokens needs exposed
 import os
-frontend_url = os.environ.get("VITE_WEB_URL", "http://localhost:3000")
+frontend_url = os.environ.get("VITE_WEB_URL", "http://localhost:3000").rstrip("/")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[frontend_url],   # dynamic origin
