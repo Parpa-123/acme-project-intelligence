@@ -7,6 +7,12 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 # E.g. postgresql+psycopg://appuser:apppassword@postgres:5432/appdb
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql+psycopg://appuser:apppassword@localhost:5432/appdb")
 
+# Fix for PaaS providers (like Render/Neon) that inject postgres:// or postgresql:// URLs
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+
 engine = create_engine(
     DATABASE_URL,
     pool_size=20,
