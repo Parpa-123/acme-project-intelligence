@@ -17,6 +17,8 @@ import { RightSidebar } from './RightSidebar';
 import type { SidebarTab } from './RightSidebar';
 import { useAudioStreamer } from '../../hooks/useAudioStreamer';
 import { useCurrentUser } from '../../api/user';
+import { API_BASE_URL } from '../../api/client';
+import { useEffect } from 'react';
 
 
 
@@ -34,6 +36,27 @@ export function MeetingRoom() {
     navigate(`/projects/${projectId}`, { replace: true });
     return null;
   }
+
+  // Ensure the backend registers the leave event even if the browser tab is closed abruptly
+  useEffect(() => {
+    if (!meetingId) return;
+
+    const fireLeaveBeacon = () => {
+      const endpoint = `${API_BASE_URL}/meetings/${meetingId}/leave`;
+      // We must send credentials (cookies) for SuperTokens authentication, but sendBeacon doesn't 
+      // allow setting custom headers. It DOES automatically include cookies if credentials mode is satisfied.
+      // A Blob with JSON type is used to match our API expectations loosely.
+      const blob = new Blob(['{}'], { type: 'application/json' });
+      navigator.sendBeacon(endpoint, blob);
+    };
+
+    window.addEventListener('beforeunload', fireLeaveBeacon);
+
+    return () => {
+      window.removeEventListener('beforeunload', fireLeaveBeacon);
+      fireLeaveBeacon(); // Also fire on React unmount (SPA navigation)
+    };
+  }, [meetingId]);
 
   const handleDisconnected = async () => {
     // Notify backend that user left
