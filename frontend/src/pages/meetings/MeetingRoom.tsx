@@ -17,7 +17,7 @@ import { RightSidebar } from './RightSidebar';
 import type { SidebarTab } from './RightSidebar';
 import { useAudioStreamer } from '../../hooks/useAudioStreamer';
 import { useCurrentUser } from '../../api/user';
-import { API_BASE_URL } from '../../api/client';
+import { fetcher } from '../../api/client';
 import { useEffect } from 'react';
 
 
@@ -42,12 +42,13 @@ export function MeetingRoom() {
     if (!meetingId) return;
 
     const fireLeaveBeacon = () => {
-      const endpoint = `${API_BASE_URL}/meetings/${meetingId}/leave`;
-      // We must send credentials (cookies) for SuperTokens authentication, but sendBeacon doesn't 
-      // allow setting custom headers. It DOES automatically include cookies if credentials mode is satisfied.
-      // A Blob with JSON type is used to match our API expectations loosely.
-      const blob = new Blob(['{}'], { type: 'application/json' });
-      navigator.sendBeacon(endpoint, blob);
+      // Use standard fetcher but with keepalive: true so it survives tab close.
+      // This is crucial because SuperTokens intercepts fetch to add auth headers/cookies, 
+      // which sendBeacon bypasses, leading to 401 Unauthorized.
+      fetcher(`/meetings/${meetingId}/leave`, {
+        method: 'POST',
+        keepalive: true,
+      }).catch(e => console.error("Keepalive leave failed", e));
     };
 
     window.addEventListener('beforeunload', fireLeaveBeacon);
