@@ -8,8 +8,8 @@ from src.database import SessionLocal
 from src.meeting.models import Meeting, MeetingSpace, MeetingTranscript, MeetingParticipant
 
 async def consume_meeting_events():
-    redis_host = os.environ.get("REDIS_HOST", "redis")
-    redis_client = aioredis.Redis(host=redis_host, port=6379, db=0)
+    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    redis_client = aioredis.from_url(redis_url, decode_responses=True)
     
     stream_name = "meeting.events"
     group_name = "transcript_workers"

@@ -476,8 +476,8 @@ async def websocket_transcript(websocket: WebSocket, meeting_id: str, db: Sessio
         
     room_name = meeting.meeting_space.livekit_room_name
     
-    redis_host = os.environ.get("REDIS_HOST", "redis")
-    redis_client = aioredis.Redis(host=redis_host, port=6379, db=0)
+    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    redis_client = aioredis.from_url(redis_url, decode_responses=True)
     
     last_id = "$"
     
@@ -539,8 +539,8 @@ async def websocket_stt_proxy(
 
     print(f"\033[94m[STT Proxy] Starting session for room: {room_name} and user: {user_name}\033[0m")
 
-    redis_host = os.environ.get("REDIS_HOST", "redis")
-    redis_client = aioredis.Redis(host=redis_host, port=6379, db=0)
+    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    redis_client = aioredis.from_url(redis_url, decode_responses=True)
 
     url = f"wss://api.sarvam.ai/speech-to-text/ws?language-code={language}&model=saaras%3Av3&vad_signals=true&sample_rate=16000&mode={mode}"
     headers = {"api-subscription-key": sarvam_key}

@@ -61,4 +61,4 @@ class WorkerSettings:
     max_tries = 3
     
     # We use redis as hostname since we run in docker-compose.
-    redis_settings = RedisSettings(host=os.environ.get("REDIS_HOST", "redis"), port=6379)
+    redis_settings = RedisSettings.from_url(os.environ.get("REDIS_URL", "redis://localhost:6379/0"))
