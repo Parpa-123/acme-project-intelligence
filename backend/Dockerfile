@@ -23,8 +23,10 @@ COPY requirements.txt .
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --requirement requirements.txt
-# Copy application source
-COPY . .
+# Copy application source and migrations
+COPY src/ ./src/
+COPY alembic/ ./alembic/
+COPY alembic.ini .
 
 
 # ---------- Runner ----------
@@ -34,17 +36,25 @@ WORKDIR /app
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Install runtime dependencies for psycopg2
+# Install runtime dependencies including supervisor
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
+    supervisor \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the virtual environment from the builder
 COPY --from=builder /app/.venv /app/.venv
 
-# Copy only the application code
+# Copy only the application code and migrations
 COPY --from=builder /app/src ./src
+COPY --from=builder /app/alembic ./alembic
+COPY --from=builder /app/alembic.ini ./alembic.ini
+
+# Copy deployment scripts
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY start.sh ./
+RUN sed -i 's/\r$//' start.sh && chmod +x start.sh
 
 EXPOSE 8000
 
-CMD ["fastapi", "run", "src/main.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["./start.sh"]
