@@ -14,7 +14,7 @@ async def enqueue_arq_job(job_name: str, *args, **kwargs):
     try:
         redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
         logger.info(f"Enqueuing {job_name} on {redis_url}")
-        pool = await create_pool(RedisSettings.from_url(redis_url))
+        pool = await create_pool(RedisSettings.from_dsn(redis_url))
         job = await pool.enqueue_job(job_name, *args, **kwargs)
         logger.info(f"Successfully enqueued {job_name} with job id {job.job_id if job else 'None'}")
         await pool.close()

@@ -103,8 +103,8 @@ def init_supertokens() -> None:
         ),
         app_info=InputAppInfo(
             app_name=os.environ.get("APP_NAME", "MyApp"),
-            api_domain=os.environ.get("API_DOMAIN", "http://localhost:8000"),
-            website_domain=os.environ.get("WEBSITE_DOMAIN", "http://localhost:3000"),
+            api_domain=os.environ.get("API_DOMAIN", os.environ.get("RENDER_EXTERNAL_URL", "http://localhost:8000")),
+            website_domain=os.environ.get("WEBSITE_DOMAIN", os.environ.get("VITE_WEB_URL", "http://localhost:3000")),
             api_base_path="/auth",
             website_base_path="/auth",
         ),

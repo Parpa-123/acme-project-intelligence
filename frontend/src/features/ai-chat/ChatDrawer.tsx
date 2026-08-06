@@ -71,7 +71,8 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
 
   const deleteSessionMutation = useMutation({
     mutationFn: async (sessionId: string) => {
-      const res = await fetch(`http://localhost:8000/projects/${projectId}/chat/sessions/${sessionId}`, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API_URL}/projects/${projectId}/chat/sessions/${sessionId}`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to delete session');
@@ -95,7 +96,8 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
   const { data: sessions = [], isLoading: loadingSessions } = useQuery({
     queryKey: ['chatSessions', projectId],
     queryFn: async () => {
-      const res = await fetch(`http://localhost:8000/projects/${projectId}/chat/sessions`);
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API_URL}/projects/${projectId}/chat/sessions`);
       if (!res.ok) throw new Error('Failed to load sessions');
       return res.json() as Promise<ChatSession[]>;
     },
@@ -107,7 +109,8 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
     queryKey: ['chatMessages', projectId, activeSessionId],
     queryFn: async () => {
       if (!activeSessionId || activeSessionId === 'new') return [];
-      const res = await fetch(`http://localhost:8000/projects/${projectId}/chat/sessions/${activeSessionId}/messages`);
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API_URL}/projects/${projectId}/chat/sessions/${activeSessionId}/messages`);
       if (!res.ok) throw new Error('Failed to load messages');
       const data = await res.json();
       setMessages(activeSessionId, data);
