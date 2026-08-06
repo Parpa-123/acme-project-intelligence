@@ -28,7 +28,8 @@ export function useAudioStreamer(meetingId: string, isEnabled: boolean, userName
         const workletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
         workletNodeRef.current = workletNode;
 
-        const WS_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/^http/, 'ws');
+        const envUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+        const WS_BASE_URL = envUrl.replace(/^http/, 'ws');
         const wsUrl = `${WS_BASE_URL}/meetings/${meetingId}/stt/ws?language=${language}&mode=${mode}&user_name=${encodeURIComponent(userName)}&user_id=${encodeURIComponent(userId)}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;

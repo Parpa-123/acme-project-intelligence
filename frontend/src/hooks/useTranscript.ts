@@ -34,7 +34,7 @@ export const useTranscript = (meetingId: string | undefined) => {
 
     // Use ws:// or wss:// based on current protocol
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
     const wsUrl = baseUrl.replace(/^https?:\/\//, `${protocol}//`) + `/meetings/${meetingId}/transcript/ws`;
 
     const ws = new WebSocket(wsUrl);
