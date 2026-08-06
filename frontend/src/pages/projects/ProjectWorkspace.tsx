@@ -50,7 +50,7 @@ export function ProjectWorkspace() {
   
   // Determine current user's role in this project for UI permissions
   const userRole = current_user_role;
-  const isOwner = userRole === 'owner';
+  const isOwner = userRole === 'owner' || project.owner_id === currentUser?.id;
   const isAdmin = isOwner || userRole === 'admin';
 
   return (
