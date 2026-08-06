@@ -31,7 +31,7 @@ from .service import MeetingSessionService
 from src.projects.service import ProjectService
 from src.projects.models import MemberRole
 from src.models import User
-from src.arq_client import enqueue_arq_job
+from src.arq_client import enqueue_arq_job, enqueue_arq_job_sync
 
 router = APIRouter(prefix="/projects/{project_id}/meeting-spaces", tags=["Meeting Spaces (Projects)"])
 space_router = APIRouter(prefix="/meeting-spaces", tags=["Meeting Spaces (Detail)"])
@@ -320,7 +320,7 @@ def start_stt(
     project_service._check_project_access(meeting.meeting_space.project_id, user.id)
     
     # Dispatch STT Agent manually
-    enqueue_arq_job(
+    enqueue_arq_job_sync(
         "dispatch_stt_agent", 
         meeting.meeting_space.livekit_room_name
     )

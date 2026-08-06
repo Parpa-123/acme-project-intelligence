@@ -168,7 +168,7 @@ class MeetingSessionService:
                 self.db.add(processing_status)
                 
                 # Enqueue the Knowledge Worker to kick off the AI Pipeline
-                from src.arq_client import enqueue_arq_job
-                enqueue_arq_job("process_meeting_knowledge", meeting_id)
+                from src.arq_client import enqueue_arq_job_sync
+                enqueue_arq_job_sync("process_meeting_knowledge", str(meeting_id))
                 
         self.db.commit()
