@@ -24,6 +24,11 @@ from src.projects import models as project_models
 from src.meeting import models as meeting_models
 from src.knowledge import models as knowledge_models
 
+from sqlalchemy import text
+with engine.connect() as conn:
+    conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    conn.commit()
+
 models.Base.metadata.create_all(bind=engine)
 
 from contextlib import asynccontextmanager
