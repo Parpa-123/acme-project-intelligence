@@ -1,5 +1,6 @@
 # Project Intelligence Platform
 
+**[Click for App : https://acme-project-intelligence.onrender.com/](https://acme-project-intelligence.onrender.com/)**
 A comprehensive full-stack application that integrates video conferencing, document management, AI-driven contextual chat, and global knowledge graphs. Built for seamless team collaboration and intelligent meeting spaces.
 
 ## Overview
