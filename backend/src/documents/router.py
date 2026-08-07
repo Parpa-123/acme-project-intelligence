@@ -108,9 +108,15 @@ async def delete_document(
     db: Session = Depends(get_db),
     session: SessionContainer = Depends(verify_session())
 ):
+    from src.projects.models import MemberRole
+    
     project_service = ProjectService(db)
     user = project_service._get_user_by_supertokens_id(session.get_user_id())
-    project_service._check_project_access(project_id, user.id)
+    project_service._check_project_access(
+        project_id, 
+        user.id,
+        require_role=[MemberRole.OWNER, MemberRole.ADMIN]
+    )
     
     doc = db.query(ProjectDocument).filter(ProjectDocument.id == document_id, ProjectDocument.project_id == project_id).first()
     if not doc:

@@ -203,12 +203,16 @@ def archive_meeting_space(
         
     project_service = ProjectService(db)
     user = project_service._get_user_by_supertokens_id(session.get_user_id())
-    # Require admin or owner role to archive
-    project_service._check_project_access(
-        space.project_id, 
-        user.id, 
-        require_role=[MemberRole.OWNER, MemberRole.ADMIN]
-    )
+    # Allow creator, or require admin/owner role
+    if space.created_by != user.id:
+        project_service._check_project_access(
+            space.project_id, 
+            user.id, 
+            require_role=[MemberRole.OWNER, MemberRole.ADMIN]
+        )
+    else:
+        # Just verify they still have project access
+        project_service._check_project_access(space.project_id, user.id)
     
     active_meeting = repo.get_active_meeting_for_space(space.id)
     if active_meeting:
