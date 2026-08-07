@@ -44,11 +44,21 @@ class KnowledgeRepository:
         return entries
 
     def save_knowledge_chunks(self, meeting_id: str, chunks: List[KnowledgeChunkData]):
+        # Fetch the meeting to find its project_id
+        from src.meeting.models import Meeting
+        meeting = self.db.query(Meeting).filter(Meeting.id == meeting_id).first()
+        if not meeting:
+            print(f"Cannot save knowledge chunks, meeting {meeting_id} not found.")
+            return
+            
+        project_id = meeting.meeting_space.project_id
+
         # Clear existing chunks for this meeting to allow re-runs
         self.db.query(KnowledgeChunk).filter(KnowledgeChunk.meeting_id == meeting_id).delete()
         
         for data in chunks:
             db_chunk = KnowledgeChunk(
+                project_id=project_id,
                 meeting_id=meeting_id,
                 chunk_index=data.chunk_index,
                 start_timestamp=data.start_timestamp,
