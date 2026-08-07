@@ -23,11 +23,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from src.models import Base
 target_metadata = Base.metadata
 
-# Override sqlalchemy.url with DATABASE_URL if provided
-from dotenv import load_dotenv
-load_dotenv()
-database_url = os.environ.get("DATABASE_URL")
-if database_url:
+from src.database import DATABASE_URL
+if DATABASE_URL:
+    database_url = DATABASE_URL
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
     elif database_url.startswith("postgresql://"):
