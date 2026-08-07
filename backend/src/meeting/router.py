@@ -56,6 +56,9 @@ def create_meeting_space(
         description=space_in.description
     )
     
+    # Dispatch notification to other project members
+    enqueue_arq_job_sync("notify_meeting_space_created", project_id, str(space.id), user.id)
+    
     # Construct a frontend join URL
     frontend_url = os.environ.get("VITE_WEB_URL", "http://localhost:3000")
     join_url = f"{frontend_url}/m/{space.livekit_room_name}"

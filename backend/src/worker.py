@@ -179,6 +179,122 @@ async def check_meeting_empty(ctx, meeting_id: str):
     finally:
         db.close()
 
+async def notify_meeting_space_created(ctx, project_id: int, space_id: str, initiator_id: int):
+    from src.database import SessionLocal
+    from src.meeting.models import MeetingSpace
+    from src.projects.models import Project, ProjectMembers
+    from src.models import User
+    
+    db = SessionLocal()
+    try:
+        space = db.query(MeetingSpace).filter(MeetingSpace.id == space_id).first()
+        project = db.query(Project).filter(Project.id == project_id).first()
+        initiator = db.query(User).filter(User.id == initiator_id).first()
+        
+        if not space or not project or not initiator:
+            return
+            
+        members = db.query(ProjectMembers).filter(
+            ProjectMembers.project_id == project_id,
+            ProjectMembers.user_id != initiator_id
+        ).all()
+        
+        web_url = os.environ.get("VITE_WEB_URL", "http://localhost:3000").rstrip("/")
+        # User will go to project dashboard
+        join_url = f"{web_url}/projects/{project_id}"
+        
+        for member in members:
+            recipient = member.user
+            if not recipient:
+                continue
+                
+            html_content = f"""
+            <div style="font-family: Arial, sans-serif; padding: 40px; background-color: #f9fafb;">
+                <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <h2 style="color: #111827;">New Meeting Space Created</h2>
+                    <p style="color: #4b5563; font-size: 16px;">
+                        <b>{initiator.full_name or initiator.email}</b> has created a new meeting space <b>"{space.name}"</b> in the project <b>"{project.name}"</b>.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{join_url}"
+                           style="display: inline-block; padding: 14px 28px; background-color: #4f46e5; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                            View Project
+                        </a>
+                    </div>
+                </div>
+            </div>
+            """
+            
+            try:
+                resend.Emails.send({
+                    "from": os.environ.get("EMAIL_FROM", "Acme <notifications@blos-acme-conf.website>"),
+                    "to": [recipient.email],
+                    "subject": f"🗓️ New Meeting Space: {space.name} in {project.name}",
+                    "html": html_content,
+                })
+                logger.info("Meeting space created notification sent", recipient=recipient.email)
+            except Exception as e:
+                logger.error("Failed to send meeting space notification", recipient=recipient.email, exc_info=True)
+    finally:
+        db.close()
+
+async def notify_document_uploaded(ctx, project_id: int, document_id: str, initiator_id: int):
+    from src.database import SessionLocal
+    from src.documents.models import ProjectDocument
+    from src.projects.models import Project, ProjectMembers
+    from src.models import User
+    
+    db = SessionLocal()
+    try:
+        doc = db.query(ProjectDocument).filter(ProjectDocument.id == document_id).first()
+        project = db.query(Project).filter(Project.id == project_id).first()
+        initiator = db.query(User).filter(User.id == initiator_id).first()
+        
+        if not doc or not project or not initiator:
+            return
+            
+        members = db.query(ProjectMembers).filter(
+            ProjectMembers.project_id == project_id,
+            ProjectMembers.user_id != initiator_id
+        ).all()
+        
+        web_url = os.environ.get("VITE_WEB_URL", "http://localhost:3000").rstrip("/")
+        join_url = f"{web_url}/projects/{project_id}"
+        
+        for member in members:
+            recipient = member.user
+            if not recipient:
+                continue
+                
+            html_content = f"""
+            <div style="font-family: Arial, sans-serif; padding: 40px; background-color: #f9fafb;">
+                <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <h2 style="color: #111827;">New Document Uploaded</h2>
+                    <p style="color: #4b5563; font-size: 16px;">
+                        <b>{initiator.full_name or initiator.email}</b> has uploaded a new document <b>"{doc.filename}"</b> to the project <b>"{project.name}"</b>.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{join_url}"
+                           style="display: inline-block; padding: 14px 28px; background-color: #4f46e5; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                            View Documents
+                        </a>
+                    </div>
+                </div>
+            </div>
+            """
+            
+            try:
+                resend.Emails.send({
+                    "from": os.environ.get("EMAIL_FROM", "Acme <notifications@blos-acme-conf.website>"),
+                    "to": [recipient.email],
+                    "subject": f"📄 New Document: {doc.filename} in {project.name}",
+                    "html": html_content,
+                })
+                logger.info("Document upload notification sent", recipient=recipient.email)
+            except Exception as e:
+                logger.error("Failed to send document upload notification", recipient=recipient.email, exc_info=True)
+    finally:
+        db.close()
 
 from src.knowledge.worker import process_meeting_knowledge
 from src.enrichment.worker import enrich_meeting
@@ -192,7 +308,9 @@ class WorkerSettings:
         enrich_meeting, 
         process_document_pipeline, 
         delete_document_pipeline,
-        check_meeting_empty
+        check_meeting_empty,
+        notify_meeting_space_created,
+        notify_document_uploaded
     ]
     job_timeout = 3600  # Allow long running tasks (1 hour)
     max_tries = 3

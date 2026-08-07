@@ -83,6 +83,9 @@ async def upload_document(
     # 4. Dispatch Arq Background Task for LlamaIndex/Pinecone ingestion
     await enqueue_arq_job("process_document_pipeline", str(doc.id))
     
+    # 5. Dispatch notification to other project members
+    await enqueue_arq_job("notify_document_uploaded", project_id, str(doc.id), user.id)
+    
     return doc
 
 @router.get("", response_model=List[ProjectDocumentResponse])
