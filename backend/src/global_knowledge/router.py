@@ -35,12 +35,18 @@ def _paginate(query, page: int, size: int):
     }
 
 def get_global_artifacts(db: Session, model: Any, page: int, size: int):
+    from sqlalchemy import or_
     # Join with Meeting, MeetingSpace, and Project
     query = db.query(model, Project.name.label('project_name'), Project.id.label('project_id'), MeetingSpace.name.label('meeting_title'))\
         .join(Meeting, model.meeting_id == Meeting.id)\
         .join(MeetingSpace, Meeting.meeting_space_id == MeetingSpace.id)\
         .join(Project, MeetingSpace.project_id == Project.id)\
-        .filter(MeetingSpace.is_global == True)
+        .filter(
+            or_(
+                MeetingSpace.is_global == True,
+                Project.is_global == True
+            )
+        )
         
     query = query.order_by(desc(model.created_at))
     
@@ -97,8 +103,14 @@ def search_global_knowledge(
     query = query.join(MeetingSpace, MeetingSpace.id == Meeting.meeting_space_id)
     query = query.join(Project, Project.id == MeetingSpace.project_id)
     
-    # FILTER BY GLOBAL
-    query = query.filter(MeetingSpace.is_global == True)
+    from sqlalchemy import or_
+    # FILTER BY GLOBAL (Space is global OR Project is global)
+    query = query.filter(
+        or_(
+            MeetingSpace.is_global == True,
+            Project.is_global == True
+        )
+    )
     query = query.order_by(distance_expr).limit(top_k)
     
     from src.core.metrics import retrieval_latency_histogram
