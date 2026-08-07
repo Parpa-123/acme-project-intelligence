@@ -42,6 +42,8 @@ async def poll_arq_queue_depth(redis_conn):
     from src.core.metrics import redis_queue_depth_gauge
     while True:
         try:
+            count = await redis_conn.zcard("arq:queue")
+            redis_queue_depth_gauge.set(count or 0)
         except Exception:
             pass
         await asyncio.sleep(5)
