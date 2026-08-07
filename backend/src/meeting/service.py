@@ -69,9 +69,21 @@ class MeetingSessionService:
         if not space:
             raise HTTPException(status_code=404, detail="Meeting space not found")
 
-        # Check for active meeting, if none exists, start it
+        # Check for active meeting, if none exists, verify permissions and start it
         meeting = self.repo.get_active_meeting_for_space(space.id)
         if not meeting:
+            from src.projects.models import ProjectMembers, MemberRole
+            member = self.db.query(ProjectMembers).filter(
+                ProjectMembers.project_id == space.project_id,
+                ProjectMembers.user_id == user.id
+            ).first()
+            
+            if not member or (member.role not in [MemberRole.OWNER, MemberRole.ADMIN] and space.created_by != user.id):
+                raise HTTPException(
+                    status_code=403, 
+                    detail="Only project admins or the space creator can start a new meeting. Please wait for them to join."
+                )
+                
             meeting = self.start_meeting(space_id, user.id)
 
         # Generate LiveKit Token

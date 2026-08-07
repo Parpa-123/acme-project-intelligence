@@ -22,6 +22,12 @@ export const useMeetingSpaceDetail = (spaceId: string) => {
     queryKey: ['meeting-spaces', spaceId],
     queryFn: () => fetcher<MeetingSpaceDetailResponse>(`/meeting-spaces/${spaceId}`),
     enabled: !!spaceId,
+    refetchInterval: (query) => {
+      // Poll every 5 seconds if the meeting hasn't been started yet
+      const data = query.state.data;
+      if (data && !data.active_meeting) return 5000;
+      return false;
+    },
   });
 };
 

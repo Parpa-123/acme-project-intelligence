@@ -15,6 +15,7 @@ export function MeetingPreJoin() {
   const [videoEnabled, setVideoEnabled] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [videoTrack, setVideoTrack] = useState<LocalVideoTrack | null>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -42,13 +43,15 @@ export function MeetingPreJoin() {
   }, [videoEnabled]);
 
   const handleJoin = () => {
-    if (videoTrack) {
-      videoTrack.stop();
-      videoTrack.detach();
-    }
+    setJoinError(null);
     
     joinMeeting.mutate(spaceId!, {
       onSuccess: (data) => {
+        if (videoTrack) {
+          videoTrack.stop();
+          videoTrack.detach();
+        }
+        
         // Pass the token and URL to the room component via history state
         navigate(`/projects/${projectId}/spaces/${spaceId}/room`, {
           state: {
@@ -60,9 +63,9 @@ export function MeetingPreJoin() {
           }
         });
       },
-      onError: (err) => {
+      onError: (err: any) => {
         console.error("Failed to join meeting", err);
-        alert("Failed to join meeting. See console.");
+        setJoinError(err.message || "Failed to join meeting. Please try again.");
       }
     });
   };
@@ -136,8 +139,24 @@ export function MeetingPreJoin() {
 
         {/* Right: Join Form */}
         <div className="w-full lg:w-96 flex flex-col items-center lg:items-start text-center lg:text-left glass-panel p-8 rounded-2xl border border-white/10 shadow-xl">
+          {spaceDetail?.active_meeting ? (
+            <div className="inline-block px-3 py-1 mb-4 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold tracking-wider uppercase border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+              Meeting is Live
+            </div>
+          ) : (
+            <div className="inline-block px-3 py-1 mb-4 rounded-full bg-amber-500/10 text-amber-400 text-xs font-semibold tracking-wider uppercase border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse">
+              Waiting for Host...
+            </div>
+          )}
+        
           <h1 className="text-3xl font-extrabold text-white mb-3 text-glow-md">{spaceDetail?.name || 'Meeting Room'}</h1>
           <p className="text-gray-400 mb-8">{spaceDetail?.description || 'Join the persistent meeting space for this project.'}</p>
+          
+          {joinError && (
+            <div className="w-full p-4 mb-6 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-left shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+              {joinError}
+            </div>
+          )}
           
           <Button
             onClick={handleJoin}
