@@ -190,6 +190,29 @@ async def protected_route(
         }
     )
 
+@app.get("/api/admin/reprocess-meetings", tags=["admin"])
+async def reprocess_meetings(db: Session = Depends(get_db)):
+    """Temporary endpoint to retroactively re-queue failed meetings into ARQ."""
+    from src.meeting.models import Meeting, MeetingStatus, MeetingProcessingStatus, PipelineStatus
+    from src.arq_client import enqueue_arq_job_sync
+    
+    meetings = db.query(Meeting).filter(Meeting.status == MeetingStatus.COMPLETED).all()
+    count = 0
+    for m in meetings:
+        ps = db.query(MeetingProcessingStatus).filter_by(meeting_id=m.id).first()
+        if not ps:
+            ps = MeetingProcessingStatus(meeting_id=m.id)
+            db.add(ps)
+            
+        ps.knowledge_status = PipelineStatus.PENDING
+        ps.enrichment_status = PipelineStatus.PENDING
+        db.commit()
+        
+        enqueue_arq_job_sync("process_meeting_knowledge", str(m.id))
+        count += 1
+        
+    return JSONResponse({"status": "success", "reprocessed_count": count})
+
 # ── 7. Include Feature Routers ────────────────────────────────────────────────
 from src.projects.router import router as projects_router
 from src.projects.router import invitations_router
