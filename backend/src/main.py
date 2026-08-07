@@ -72,6 +72,14 @@ async def keep_alive():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Fallback to ensure project_id is nullable if Alembic migration fails/skips on remote
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE chat_sessions ALTER COLUMN project_id DROP NOT NULL;"))
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Could not drop NOT NULL constraint on chat_sessions: {e}")
+
     # Initialize Redis for rate limiting and caching
     redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
     redis_conn = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
