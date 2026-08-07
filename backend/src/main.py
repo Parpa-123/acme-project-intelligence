@@ -42,9 +42,6 @@ async def poll_arq_queue_depth(redis_conn):
     from src.core.metrics import redis_queue_depth_gauge
     while True:
         try:
-            # arq uses 'arq:queue' as the default list key for jobs
-            depth = await redis_conn.llen("arq:queue")
-            redis_queue_depth_gauge.set(depth)
         except Exception:
             pass
         await asyncio.sleep(5)
@@ -53,7 +50,15 @@ async def keep_alive():
     import httpx
     import structlog
     logger = structlog.get_logger("keep_alive")
-    ping_url = os.environ.get("PUBLIC_API_URL", "http://localhost:8000/health")
+    # Use 127.0.0.1 instead of localhost to prevent IPv6 binding issues in Docker
+    api_domain = os.environ.get("API_DOMAIN")
+    if api_domain:
+        if not api_domain.startswith("http"):
+            api_domain = f"https://{api_domain}"
+        ping_url = f"{api_domain.rstrip('/')}/health"
+    else:
+        ping_url = os.environ.get("PUBLIC_API_URL", "http://127.0.0.1:8000/health")
+        
     while True:
         await asyncio.sleep(150)  # Ping every 2.5 minutes
         try:
