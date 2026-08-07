@@ -57,6 +57,11 @@ class MeetingSessionService:
 
         self.db.commit()
         self.db.refresh(meeting)
+        
+        # Enqueue the notification to alert other project members
+        from src.arq_client import enqueue_arq_job_sync
+        enqueue_arq_job_sync("notify_project_members_meeting_started", str(meeting.id), user_id)
+        
         return meeting
 
     def join_meeting(self, space_id: str, user: User) -> dict:
