@@ -82,9 +82,8 @@ class KnowledgeExplorer:
         return self.get_artifacts(project_id, MeetingSummary, meeting_id, page, size)
 
     def search(self, project_id: int, query: str, meeting_id: Optional[str] = None, top_k: int = 10):
-        # We reuse the RetrievalService to do vector search + reranking
         retrieval_svc = RetrievalService(self.db)
-        candidates = retrieval_svc.retrieve(query=query, project_id=project_id, meeting_id=meeting_id, top_k=top_k)
+        candidates = retrieval_svc.retrieve(query=query, project_id=project_id, meeting_id=meeting_id, limit=top_k)
         
         results = []
         for c in candidates:
