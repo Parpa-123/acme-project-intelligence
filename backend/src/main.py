@@ -49,6 +49,20 @@ async def poll_arq_queue_depth(redis_conn):
             pass
         await asyncio.sleep(5)
 
+async def keep_alive():
+    import httpx
+    import structlog
+    logger = structlog.get_logger("keep_alive")
+    ping_url = os.environ.get("PUBLIC_API_URL", "http://localhost:8000/health")
+    while True:
+        await asyncio.sleep(150)  # Ping every 2.5 minutes
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(ping_url, timeout=10.0)
+                logger.info(f"Keep-alive ping sent to {ping_url}", status_code=resp.status_code)
+        except Exception as e:
+            logger.error(f"Keep-alive ping failed: {str(e)}")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize Redis for rate limiting and caching
@@ -68,11 +82,15 @@ async def lifespan(app: FastAPI):
     # Startup: spawn queue depth poller
     poll_task = asyncio.create_task(poll_arq_queue_depth(redis_conn))
     
+    # Startup: spawn keep-alive task
+    keep_alive_task = asyncio.create_task(keep_alive())
+    
     yield
     
-    # Shutdown: cancel the consumer and close redis
+    # Shutdown: cancel the tasks and close redis
     task.cancel()
     poll_task.cancel()
+    keep_alive_task.cancel()
     await redis_conn.close()
     try:
         await task
