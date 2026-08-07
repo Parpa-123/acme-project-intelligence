@@ -92,7 +92,7 @@ class KnowledgeExplorer:
             if chunk:
                 # Get meeting title
                 meeting = self.db.query(Meeting).filter(Meeting.id == chunk.meeting_id).first()
-                title = meeting.space.name if meeting and meeting.space else "Unknown Meeting"
+                title = meeting.meeting_space.name if meeting and meeting.meeting_space else "Unknown Meeting"
                 
                 # Convert chunk to dict matching schema
                 chunk_dict = {
