@@ -9,10 +9,11 @@ import {
   TrackToggle,
   DisconnectButton,
   GridLayout,
+  useDataChannel
 } from '@livekit/components-react';
 import { Track, ConnectionState } from 'livekit-client';
 import { Loader2, PhoneOff, MessageSquare, FileText, Users, Bot, BotOff } from 'lucide-react';
-import { useLeaveMeeting } from '../../api/meetings';
+import { useLeaveMeeting, useMeetingSpaceDetail } from '../../api/meetings';
 import { RightSidebar } from './RightSidebar';
 import type { SidebarTab } from './RightSidebar';
 import { useAudioStreamer } from '../../hooks/useAudioStreamer';
@@ -88,9 +89,13 @@ export function MeetingRoom() {
 }
 
 function MeetingUI({ meetingId, onLeave }: { meetingId: string, onLeave: () => void }) {
+  const { spaceId } = useParams<{ spaceId: string }>();
+  const { data: spaceDetail } = useMeetingSpaceDetail(spaceId!);
+  
   const { data: user } = useCurrentUser();
   const userName = user ? (user.full_name || user.email.split('@')[0]) : "Unknown User";
   const userId = user ? user.id.toString() : "";
+  const isCreator = user?.id === spaceDetail?.created_by?.id;
 
   const connectionState = useConnectionState();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -160,6 +165,7 @@ function MeetingUI({ meetingId, onLeave }: { meetingId: string, onLeave: () => v
           meetingId={meetingId}
           userName={userName}
           userId={userId}
+          isCreator={isCreator}
         />
       </div>
 
@@ -188,7 +194,8 @@ function CustomControlBar({
   setSttLanguage,
   meetingId,
   userName,
-  userId
+  userId,
+  isCreator
 }: { 
   isSidebarOpen: boolean; 
   activeTab: SidebarTab;
@@ -202,9 +209,48 @@ function CustomControlBar({
   meetingId: string;
   userName: string;
   userId: string;
+  isCreator: boolean;
 }) {
   
   useAudioStreamer(meetingId, isTranscriptionEnabled, userName, userId, sttLanguage, sttMode);
+
+  const { send } = useDataChannel("stt-control", (msg) => {
+    const data = new TextDecoder().decode(msg.payload);
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.action === 'enable_stt') {
+        setIsTranscriptionEnabled(true);
+      } else if (parsed.action === 'disable_stt') {
+        setIsTranscriptionEnabled(false);
+      } else if (parsed.action === 'sync_request') {
+        if (isCreator) {
+          send(new TextEncoder().encode(JSON.stringify({ 
+            action: isTranscriptionEnabled ? 'enable_stt' : 'disable_stt' 
+          })), { reliable: true });
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse stt-control message", e);
+    }
+  });
+
+  useEffect(() => {
+    if (!isCreator) {
+      const timeoutId = setTimeout(() => {
+        send(new TextEncoder().encode(JSON.stringify({ action: 'sync_request' })), { reliable: true });
+      }, 1000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isCreator, send]);
+
+  const toggleSttGlobal = () => {
+    if (!isCreator) return;
+    const newState = !isTranscriptionEnabled;
+    setIsTranscriptionEnabled(newState);
+    send(new TextEncoder().encode(JSON.stringify({ 
+      action: newState ? 'enable_stt' : 'disable_stt' 
+    })), { reliable: true });
+  };
 
   return (
     <div className="lk-control-bar absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-xl border border-white/10 bg-[#111]/90 backdrop-blur">
@@ -216,14 +262,19 @@ function CustomControlBar({
 
 
       <div className="lk-button-group">
-        <button 
-          onClick={() => setIsTranscriptionEnabled(!isTranscriptionEnabled)}
-          className="lk-button"
-          title={isTranscriptionEnabled ? "Stop AI Transcription" : "Start AI Transcription"}
-          aria-pressed={isTranscriptionEnabled}
-        >
-          {isTranscriptionEnabled ? <Bot className="w-5 h-5" /> : <BotOff className="w-5 h-5" />}
-        </button>
+        {isCreator && (
+          <button 
+            onClick={toggleSttGlobal}
+            className="lk-button relative"
+            title={isTranscriptionEnabled ? "Stop AI Transcription for Everyone" : "Start AI Transcription for Everyone"}
+            aria-pressed={isTranscriptionEnabled}
+          >
+            {isTranscriptionEnabled ? <Bot className="w-5 h-5 text-indigo-400" /> : <BotOff className="w-5 h-5" />}
+            {isTranscriptionEnabled && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full animate-ping" />
+            )}
+          </button>
+        )}
         <div className="flex flex-col mx-2 gap-1 justify-center">
           <select 
             value={sttMode} 
