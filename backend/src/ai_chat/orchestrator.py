@@ -11,7 +11,7 @@ class RAGOrchestrator:
         self.db = db
         self.llm = llm or get_default_llm()
 
-    async def gather_evidence(self, query: str, project_id: int, chat_history: List[Dict[str, str]] = None) -> str:
+    async def gather_evidence(self, query: str, project_id: Optional[int], chat_history: List[Dict[str, str]] = None, is_global: bool = False) -> str:
         """
         The Agent Loop:
         1. Analyzes the user's question.
@@ -32,11 +32,14 @@ class RAGOrchestrator:
 
         max_iterations = 3
         evidence_gathered = []
+        
+        # Limit tools for global mode
+        available_tools = [t for t in TOOLS_SCHEMA if t["function"]["name"] == "retrieve_chunks"] if is_global else TOOLS_SCHEMA
 
         for i in range(max_iterations):
             logger.info(f"Orchestrator iteration {i+1}")
             try:
-                response_msg = await self.llm.generate(messages, tools=TOOLS_SCHEMA)
+                response_msg = await self.llm.generate(messages, tools=available_tools)
             except Exception as e:
                 logger.error(f"LLM generation failed: {e}")
                 break
@@ -50,7 +53,7 @@ class RAGOrchestrator:
                     
                     logger.info(f"Executing tool: {tool_name}")
                     try:
-                        evidence = await execute_tool(tool_name, tool_args, self.db, project_id)
+                        evidence = await execute_tool(tool_name, tool_args, self.db, project_id, is_global)
                     except Exception as e:
                         logger.error(f"Tool {tool_name} failed with error: {e}")
                         evidence = f"Error executing tool {tool_name}: {str(e)}"

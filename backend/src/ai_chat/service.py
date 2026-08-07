@@ -1,5 +1,5 @@
 import json
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 from sqlalchemy.orm import Session
 import logging
 
@@ -17,7 +17,7 @@ class ChatService:
         self.orchestrator = RAGOrchestrator(db, llm=get_default_llm())
         self.llm = get_default_llm()
 
-    async def stream_chat(self, query: str, project_id: int, user_id: int, session_id: str = None) -> AsyncGenerator[str, None]:
+    async def stream_chat(self, query: str, project_id: Optional[int], user_id: int, session_id: str = None, is_global: bool = False) -> AsyncGenerator[str, None]:
         if not session_id:
             session = self.repository.create_session(project_id, user_id, title=query[:50])
             session_id = session.id
@@ -36,8 +36,8 @@ class ChatService:
         
         try:
             # 3. Orchestrator gathers evidence
-            yield f"data: {json.dumps({'type': 'status', 'content': 'Gathering project evidence...'})}\n\n"
-            evidence = await self.orchestrator.gather_evidence(query, project_id, history)
+            yield f"data: {json.dumps({'type': 'status', 'content': 'Gathering evidence...'})}\n\n"
+            evidence = await self.orchestrator.gather_evidence(query, project_id, history, is_global=is_global)
             
             yield f"data: {json.dumps({'type': 'status', 'content': 'Reading evidence and writing response...'})}\n\n"
             

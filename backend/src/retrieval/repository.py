@@ -27,14 +27,22 @@ class RetrievalRepository:
             q = q.outerjoin(MeetingSpace, MeetingSpace.id == Meeting.meeting_space_id)
             q = q.join(Project, Project.id == KnowledgeChunk.project_id)
             
-            # Apply Mandatory Project Filter (Target Project OR Global Projects)
+            # Apply Mandatory Filters
             from sqlalchemy import or_
-            q = q.filter(
-                or_(
-                    Project.id == filters.project_id,
-                    Project.is_global == True
+            if getattr(filters, 'is_global_search', False):
+                q = q.filter(
+                    or_(
+                        Project.is_global == True,
+                        MeetingSpace.is_global == True
+                    )
                 )
-            )
+            else:
+                q = q.filter(
+                    or_(
+                        Project.id == filters.project_id,
+                        Project.is_global == True
+                    )
+                )
             
             # Apply Optional Filters
             if filters.meeting_id and filters.meeting_id.lower() != "null":

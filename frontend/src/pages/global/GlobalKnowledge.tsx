@@ -7,6 +7,7 @@ import {
 } from '../../api/global';
 import type { GlobalCitation, GlobalDecision, GlobalRequirement, GlobalActionItem, GlobalSearchResult } from '../../api/global';
 import { FaFolder, FaMicrophone, FaSearch, FaBrain, FaClipboardList, FaCheckSquare } from 'react-icons/fa';
+import { GlobalChatWidget } from '../../features/global-chat/GlobalChatWidget';
 
 function CitationBadge({ citation }: { citation: GlobalCitation }) {
   return (
@@ -188,6 +189,7 @@ export function GlobalKnowledge() {
           
         </div>
       </div>
+      <GlobalChatWidget />
     </div>
   );
 }

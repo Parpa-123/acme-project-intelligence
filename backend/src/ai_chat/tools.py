@@ -98,7 +98,7 @@ TOOLS_SCHEMA = [
     }
 ]
 
-async def execute_tool(tool_name: str, arguments: str, db: Session, project_id: int) -> str:
+async def execute_tool(tool_name: str, arguments: str, db: Session, project_id: Optional[int], is_global: bool = False) -> str:
     """Executes a requested tool and returns the evidence as a string."""
     try:
         args_dict = json.loads(arguments)
@@ -111,7 +111,8 @@ async def execute_tool(tool_name: str, arguments: str, db: Session, project_id: 
         
         # 1. Retrieve
         retrieval_service = RetrievalService(db)
-        candidates = retrieval_service.retrieve(query=query, project_id=project_id, meeting_id=meeting_id, limit=30)
+        # Note: if is_global is True, project_id is ignored by repository.
+        candidates = retrieval_service.retrieve(query=query, project_id=project_id, meeting_id=meeting_id, limit=30, is_global_search=is_global)
         
         if not candidates:
             return "No relevant chunks found for this query."

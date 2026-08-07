@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useChatStore } from './useChatStore';
 
-export function useStreamingChat(projectId: number) {
+export function useStreamingChat(projectId?: number) {
   const [isStreaming, setIsStreaming] = useState(false);
   const { activeSessionId, setActiveSession, addMessage, updateMessage } = useChatStore();
 
@@ -22,7 +22,8 @@ export function useStreamingChat(projectId: number) {
 
     try {
       const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
-      const response = await fetch(`${API_URL}/projects/${projectId}/chat`, {
+      const endpoint = projectId !== undefined ? `/projects/${projectId}/chat` : `/global-knowledge/chat`;
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

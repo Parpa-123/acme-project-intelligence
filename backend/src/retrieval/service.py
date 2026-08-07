@@ -13,12 +13,12 @@ class RetrievalService:
         self.repository = RetrievalRepository(db)
         self.embedding_service = RetrievalEmbeddingService()
         
-    def retrieve(self, query: str, project_id: int, meeting_id: str = None, limit: int = 50) -> List[RetrievalCandidate]:
+    def retrieve(self, query: str, project_id: Optional[int], meeting_id: str = None, limit: int = 50, is_global_search: bool = False) -> List[RetrievalCandidate]:
         # 1. Generate Query Embedding
         query_embedding = self.embedding_service.generate_query_embedding(query)
         
         # 2. Setup Filters
-        filters = RetrievalFilters(project_id=project_id, meeting_id=meeting_id)
+        filters = RetrievalFilters(project_id=project_id, meeting_id=meeting_id, is_global_search=is_global_search)
         
         # 3. Search Repository (Meetings)
         results = self.repository.search_knowledge(query_embedding, filters, limit=limit)

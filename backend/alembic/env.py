@@ -24,6 +24,8 @@ from src.models import Base
 target_metadata = Base.metadata
 
 # Override sqlalchemy.url with DATABASE_URL if provided
+from dotenv import load_dotenv
+load_dotenv()
 database_url = os.environ.get("DATABASE_URL")
 if database_url:
     if database_url.startswith("postgres://"):

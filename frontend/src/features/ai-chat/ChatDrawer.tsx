@@ -10,11 +10,11 @@ import { FaPaperPlane, FaRobot, FaUser, FaCircleNotch, FaPlus, FaComment, FaTime
 import { usePinKnowledge, useUnpinKnowledge } from '../../api/knowledgeApi';
 import { toast } from 'react-hot-toast';
 
-const MessageActions = ({ text, projectId, role }: { text: string, projectId: number, role: string }) => {
+const MessageActions = ({ text, projectId, role }: { text: string, projectId?: number, role: string }) => {
   const [copied, setCopied] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  const pinMutation = usePinKnowledge(projectId);
-  const unpinMutation = useUnpinKnowledge(projectId);
+  const pinMutation = usePinKnowledge(projectId ?? 0);
+  const unpinMutation = useUnpinKnowledge(projectId ?? 0);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
@@ -23,6 +23,7 @@ const MessageActions = ({ text, projectId, role }: { text: string, projectId: nu
   };
 
   const handlePinToggle = () => {
+    if (projectId === undefined) return;
     if (isPinned) {
       unpinMutation.mutate(text, {
         onSuccess: () => setIsPinned(false)
@@ -39,7 +40,7 @@ const MessageActions = ({ text, projectId, role }: { text: string, projectId: nu
       <button onClick={handleCopy} className="text-gray-400 hover:text-emerald-400 transition-colors p-1" title="Copy to clipboard">
         {copied ? <FaCheck className="text-emerald-400" /> : <FaCopy />}
       </button>
-      {role === 'assistant' && (
+      {role === 'assistant' && projectId !== undefined && (
         <button 
           onClick={handlePinToggle} 
           disabled={pinMutation.isPending || unpinMutation.isPending}
@@ -55,7 +56,7 @@ const MessageActions = ({ text, projectId, role }: { text: string, projectId: nu
 
 
 interface ChatDrawerProps {
-  projectId: number;
+  projectId?: number;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -72,14 +73,17 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
   const deleteSessionMutation = useMutation({
     mutationFn: async (sessionId: string) => {
       const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
-      const res = await fetch(`${API_URL}/projects/${projectId}/chat/sessions/${sessionId}`, {
+      const endpoint = projectId !== undefined 
+          ? `/projects/${projectId}/chat/sessions/${sessionId}`
+          : `/global-knowledge/chat/sessions/${sessionId}`;
+      const res = await fetch(`${API_URL}${endpoint}`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to delete session');
       return sessionId;
     },
     onSuccess: (deletedSessionId) => {
-      queryClient.invalidateQueries({ queryKey: ['chatSessions', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['chatSessions', projectId ?? 'global'] });
       if (activeSessionId === deletedSessionId) {
         setActiveSession(null);
       }
@@ -94,10 +98,11 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
 
   // Fetch Sessions
   const { data: sessions = [], isLoading: loadingSessions } = useQuery({
-    queryKey: ['chatSessions', projectId],
+    queryKey: ['chatSessions', projectId ?? 'global'],
     queryFn: async () => {
       const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
-      const res = await fetch(`${API_URL}/projects/${projectId}/chat/sessions`);
+      const endpoint = projectId !== undefined ? `/projects/${projectId}/chat/sessions` : `/global-knowledge/chat/sessions`;
+      const res = await fetch(`${API_URL}${endpoint}`);
       if (!res.ok) throw new Error('Failed to load sessions');
       return res.json() as Promise<ChatSession[]>;
     },
@@ -106,11 +111,14 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
 
   // Fetch Messages for active session
   const { isLoading: loadingMessages } = useQuery({
-    queryKey: ['chatMessages', projectId, activeSessionId],
+    queryKey: ['chatMessages', projectId ?? 'global', activeSessionId],
     queryFn: async () => {
       if (!activeSessionId || activeSessionId === 'new') return [];
       const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
-      const res = await fetch(`${API_URL}/projects/${projectId}/chat/sessions/${activeSessionId}/messages`);
+      const endpoint = projectId !== undefined 
+          ? `/projects/${projectId}/chat/sessions/${activeSessionId}/messages`
+          : `/global-knowledge/chat/sessions/${activeSessionId}/messages`;
+      const res = await fetch(`${API_URL}${endpoint}`);
       if (!res.ok) throw new Error('Failed to load messages');
       const data = await res.json();
       setMessages(activeSessionId, data);
@@ -194,7 +202,9 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-white text-glow-sm">AI Copilot</h2>
-              <p className="text-xs text-emerald-400 font-medium">Project Intelligence</p>
+              <p className="text-xs text-emerald-400 font-medium">
+                {projectId !== undefined ? 'Project Intelligence' : 'Global Knowledge Base'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">

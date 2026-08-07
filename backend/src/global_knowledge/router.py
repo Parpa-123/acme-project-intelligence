@@ -141,3 +141,71 @@ def search_global_knowledge(
         })
         
     return results
+
+from fastapi.responses import StreamingResponse
+from src.ai_chat.schemas import ChatRequest, ChatSessionResponse, ChatMessageResponse
+from src.ai_chat.service import ChatService
+from src.ai_chat.repository import ChatRepository
+from src.projects.service import ProjectService
+
+@router.post("/chat")
+async def stream_global_chat(
+    request: ChatRequest,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    project_service = ProjectService(db)
+    user = project_service._get_user_by_supertokens_id(session.get_user_id())
+    
+    chat_service = ChatService(db)
+    return StreamingResponse(
+        chat_service.stream_chat(
+            query=request.message,
+            project_id=None,
+            user_id=user.id,
+            session_id=request.session_id,
+            is_global=True
+        ),
+        media_type="text/event-stream"
+    )
+
+@router.get("/chat/sessions", response_model=list[ChatSessionResponse])
+def get_global_chat_sessions(
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    project_service = ProjectService(db)
+    user = project_service._get_user_by_supertokens_id(session.get_user_id())
+    
+    repo = ChatRepository(db)
+    return repo.get_user_sessions(None, user.id)
+
+@router.get("/chat/sessions/{session_id}/messages", response_model=list[ChatMessageResponse])
+def get_global_chat_messages(
+    session_id: str,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    repo = ChatRepository(db)
+    chat_session = repo.get_session(session_id)
+    if not chat_session or chat_session.project_id is not None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Global chat session not found")
+        
+    return repo.get_messages(session_id)
+
+@router.delete("/chat/sessions/{session_id}")
+def delete_global_chat_session(
+    session_id: str,
+    db: Session = Depends(get_db),
+    session: SessionContainer = Depends(verify_session())
+):
+    repo = ChatRepository(db)
+    chat_session = repo.get_session(session_id)
+    if not chat_session or chat_session.project_id is not None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Global chat session not found")
+        
+    db.delete(chat_session)
+    db.commit()
+    return {"message": "Chat session deleted"}
