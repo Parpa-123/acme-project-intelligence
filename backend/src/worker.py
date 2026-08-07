@@ -120,12 +120,80 @@ async def notify_project_members_meeting_started(ctx, meeting_id: str, initiator
         db.close()
 
 
+async def check_meeting_empty(ctx, meeting_id: str):
+    """
+    Background task to check if a LiveKit room is actually empty.
+    Useful for cleaning up ghost meetings when participants drop ungracefully.
+    """
+    from src.database import SessionLocal
+    from src.meeting.models import Meeting, MeetingStatus, MeetingEvent, MeetingEventType
+    from datetime import datetime, timezone
+    
+    # Check if livekit is available
+    try:
+        from livekit import api
+    except ImportError:
+        return
+        
+    db = SessionLocal()
+    try:
+        meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+        if not meeting or meeting.status != MeetingStatus.IN_PROGRESS:
+            return
+            
+        space = meeting.meeting_space
+        
+        livekit_api = api.LiveKitAPI(
+            os.environ.get("LIVEKIT_TOKEN_ENDPOINT", "wss://livekit.example.com"),
+            os.environ.get("LIVEKIT_API_KEY", "devkey"),
+            os.environ.get("LIVEKIT_API_SECRET", "secret")
+        )
+        try:
+            res = await livekit_api.room.list_participants(api.ListParticipantsRequest(room=space.livekit_room_name))
+            real_users = [p for p in res.participants if not p.identity.startswith("agent")]
+            if len(real_users) == 0:
+                logger.info("Room is empty on LiveKit. Force closing meeting.")
+                meeting.status = MeetingStatus.COMPLETED
+                meeting.ended_at = datetime.now(timezone.utc)
+                
+                end_event = MeetingEvent(
+                    meeting_id=meeting.id,
+                    user_id=meeting.created_by,
+                    event_type=MeetingEventType.ENDED
+                )
+                db.add(end_event)
+                
+                from src.meeting.models import MeetingProcessingStatus
+                processing_status = MeetingProcessingStatus(meeting_id=meeting.id)
+                db.add(processing_status)
+                db.commit()
+                
+                from src.arq_client import enqueue_arq_job_sync
+                enqueue_arq_job_sync("process_meeting_knowledge", str(meeting.id))
+                
+        except Exception as e:
+            logger.error("Livekit check error", exc_info=True)
+        finally:
+            await livekit_api.aclose()
+            
+    finally:
+        db.close()
+
+
 from src.knowledge.worker import process_meeting_knowledge
 from src.enrichment.worker import enrich_meeting
 from src.documents.worker import process_document_pipeline, delete_document_pipeline
 
 class WorkerSettings:
-    functions = [send_project_invitation_email, notify_project_members_meeting_started, process_meeting_knowledge, enrich_meeting, process_document_pipeline, delete_document_pipeline]
+    functions = [
+        send_project_invitation_email, 
+        notify_project_members_meeting_started, 
+        process_meeting_knowledge, 
+        enrich_meeting, 
+        process_document_pipeline, 
+        delete_document_pipeline,
+        check_meeting_empty
+    ]
     job_timeout = 3600  # Allow long running tasks (1 hour)
     max_tries = 3
     

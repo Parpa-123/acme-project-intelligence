@@ -187,5 +187,9 @@ class MeetingSessionService:
                 # Enqueue the Knowledge Worker to kick off the AI Pipeline
                 from src.arq_client import enqueue_arq_job_sync
                 enqueue_arq_job_sync("process_meeting_knowledge", str(meeting_id))
+        else:
+            # Could be ghost participants if someone lost connection. Schedule a LiveKit check
+            from src.arq_client import enqueue_arq_job_sync
+            enqueue_arq_job_sync("check_meeting_empty", str(meeting_uuid), _defer_by=5)
                 
         self.db.commit()
