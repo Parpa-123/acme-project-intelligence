@@ -91,6 +91,7 @@ export interface MeetingSpaceListResponse {
   id: string;
   name: string;
   active_session: boolean;
+  created_by: number;
 }
 
 export interface ActiveMeetingSummary {

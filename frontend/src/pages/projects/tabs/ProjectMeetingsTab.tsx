@@ -7,6 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from '../../../components/forms/FormInput';
 import { Button } from '../../../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
+import { Dialog as HeadlessDialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
+import toast from 'react-hot-toast';
+import { useArchiveMeetingSpace } from '../../../api/meetings';
+import { Trash } from 'lucide-react';
 
 const createSpaceSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(100),
@@ -17,7 +22,17 @@ import type { MeetingSpaceListResponse } from '../../../types';
 
 type CreateSpaceFormValues = z.infer<typeof createSpaceSchema>;
 
-function SpaceCard({ space, handleJoin }: { space: MeetingSpaceListResponse, handleJoin: (id: string) => void }) {
+function SpaceCard({ 
+  space, 
+  handleJoin,
+  canDelete,
+  onDeleteRequest
+}: { 
+  space: MeetingSpaceListResponse; 
+  handleJoin: (id: string) => void;
+  canDelete: boolean;
+  onDeleteRequest: (id: string) => void;
+}) {
   return (
     <div className="glass-panel p-6 rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.15)] transition-all flex flex-col h-full border border-white/10 hover:border-indigo-500/30 group">
       <div className="flex items-center justify-between mb-4">
@@ -33,6 +48,18 @@ function SpaceCard({ space, handleJoin }: { space: MeetingSpaceListResponse, han
             Live
           </span>
         )}
+        {canDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteRequest(space.id);
+            }}
+            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors ml-2"
+            title="Archive Space"
+          >
+            <Trash className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       <div className="mt-auto pt-6">
@@ -47,10 +74,20 @@ function SpaceCard({ space, handleJoin }: { space: MeetingSpaceListResponse, han
   );
 }
 
-export function ProjectMeetingsTab({ projectId }: { projectId: number }) {
+export function ProjectMeetingsTab({ 
+  projectId,
+  isAdmin = false,
+  currentUserId
+}: { 
+  projectId: number;
+  isAdmin?: boolean;
+  currentUserId?: number;
+}) {
   const { data: spaces, isLoading, error } = useMeetingSpaces(projectId);
   const createSpace = useCreateMeetingSpace(projectId);
+  const archiveSpace = useArchiveMeetingSpace(projectId);
   const [isCreating, setIsCreating] = useState(false);
+  const [spaceToDelete, setSpaceToDelete] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const methods = useForm<CreateSpaceFormValues>({
@@ -138,11 +175,93 @@ export function ProjectMeetingsTab({ projectId }: { projectId: number }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {spaces?.filter(s => s.name !== 'Project Knowledge Notebook').map((space) => (
-            <SpaceCard key={space.id} space={space} handleJoin={handleJoin} />
-          ))}
+          {spaces?.filter(s => s.name !== 'Project Knowledge Notebook').map((space) => {
+            const canDelete = isAdmin || space.created_by === currentUserId;
+            return (
+              <SpaceCard 
+                key={space.id} 
+                space={space} 
+                handleJoin={handleJoin} 
+                canDelete={canDelete}
+                onDeleteRequest={setSpaceToDelete}
+              />
+            );
+          })}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Transition show={!!spaceToDelete} as={Fragment}>
+        <HeadlessDialog as="div" className="relative z-50" onClose={() => setSpaceToDelete(null)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <HeadlessDialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-[#1A1A1A] p-6 text-left align-middle shadow-xl transition-all border border-white/10">
+                  <HeadlessDialog.Title as="h3" className="text-lg font-bold leading-6 text-white flex items-center gap-2">
+                    <Trash className="text-red-400 h-5 w-5" /> Archive Meeting Space
+                  </HeadlessDialog.Title>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-400">
+                      Are you sure you want to archive this meeting space? Active meetings cannot be archived.
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-3">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 transition-colors"
+                      onClick={() => setSpaceToDelete(null)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-xl border border-transparent bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/30 border-red-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 transition-colors"
+                      onClick={() => {
+                        if (spaceToDelete) {
+                          archiveSpace.mutate(spaceToDelete, {
+                            onSuccess: () => {
+                              toast.success('Meeting space archived successfully!');
+                              setSpaceToDelete(null);
+                            },
+                            onError: (err: any) => {
+                              toast.error(err.message || 'Failed to archive space');
+                              setSpaceToDelete(null);
+                            }
+                          });
+                        }
+                      }}
+                      disabled={archiveSpace.isPending}
+                    >
+                      {archiveSpace.isPending ? 'Archiving...' : 'Archive Space'}
+                    </button>
+                  </div>
+                </HeadlessDialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </HeadlessDialog>
+      </Transition>
     </div>
   );
 }

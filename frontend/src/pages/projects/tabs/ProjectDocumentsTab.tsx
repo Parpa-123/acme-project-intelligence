@@ -7,9 +7,10 @@ import { FaFileAlt, FaUpload, FaSpinner, FaFilePdf, FaFileWord, FaFileCode, FaEx
 
 interface ProjectDocumentsTabProps {
   projectId: number;
+  isAdmin?: boolean;
 }
 
-export function ProjectDocumentsTab({ projectId }: ProjectDocumentsTabProps) {
+export function ProjectDocumentsTab({ projectId, isAdmin = false }: ProjectDocumentsTabProps) {
   const { data: documents, isLoading, error } = useProjectDocuments(projectId);
   const uploadDoc = useUploadDocument(projectId);
   const deleteDoc = useDeleteDocument(projectId);
@@ -197,14 +198,16 @@ export function ProjectDocumentsTab({ projectId }: ProjectDocumentsTabProps) {
                   )}
                 </div>
                 
-                <button
-                  onClick={() => setDocToDelete(doc.id)}
-                  disabled={deleteDoc.isPending || doc.status === 'deleting'}
-                  className="p-2 ml-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Delete Document"
-                >
-                  <FaTrash />
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => setDocToDelete(doc.id)}
+                    disabled={deleteDoc.isPending || doc.status === 'deleting'}
+                    className="p-2 ml-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Delete Document"
+                  >
+                    <FaTrash />
+                  </button>
+                )}
               </div>
             ))}
           </div>

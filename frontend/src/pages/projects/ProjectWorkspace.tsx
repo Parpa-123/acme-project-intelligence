@@ -147,7 +147,10 @@ export function ProjectWorkspace() {
         )}
 
         {activeTab === 'documents' && (
-          <ProjectDocumentsTab projectId={projectId} />
+          <ProjectDocumentsTab 
+            projectId={projectId} 
+            isAdmin={isAdmin}
+          />
         )}
 
         {activeTab === 'members' && (
@@ -160,7 +163,11 @@ export function ProjectWorkspace() {
         )}
 
         {activeTab === 'meetings' && (
-          <ProjectMeetingsTab projectId={projectId} />
+          <ProjectMeetingsTab 
+            projectId={projectId} 
+            isAdmin={isAdmin} 
+            currentUserId={currentUser?.id}
+          />
         )}
 
         {activeTab === 'settings' && isAdmin && (

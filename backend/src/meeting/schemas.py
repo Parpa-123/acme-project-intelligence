@@ -15,6 +15,7 @@ class MeetingSpaceListResponse(BaseModel):
     id: UUID
     name: str
     active_session: bool
+    created_by: int
 
 class ActiveMeetingSummary(BaseModel):
     id: UUID

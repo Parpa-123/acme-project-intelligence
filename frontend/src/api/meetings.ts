@@ -72,6 +72,19 @@ export const useLeaveMeeting = () => {
   });
 };
 
+export const useArchiveMeetingSpace = (projectId: number) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (spaceId: string) => 
+      fetcher(`/meeting-spaces/${spaceId}/archive`, {
+        method: 'POST',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'meeting-spaces'] });
+    },
+  });
+};
+
 export interface ChatMessage {
   id: string;
   meeting_id: string;
