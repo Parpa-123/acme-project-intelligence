@@ -46,7 +46,8 @@ class MeetingSpaceRepository:
             results.append({
                 "id": space.id,
                 "name": space.name,
-                "active_session": bool(active_meeting)
+                "active_session": bool(active_meeting),
+                "created_by": space.created_by
             })
         return results
 
