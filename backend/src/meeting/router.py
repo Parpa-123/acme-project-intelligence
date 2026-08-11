@@ -493,7 +493,7 @@ async def websocket_transcript(websocket: WebSocket, meeting_id: str, db: Sessio
             streams = await redis_client.xread(
                 {"meeting.events": last_id}, 
                 count=10, 
-                block=1000
+                block=5000
             )
             
             if streams:

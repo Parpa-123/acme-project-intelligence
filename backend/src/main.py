@@ -46,7 +46,7 @@ async def poll_arq_queue_depth(redis_conn):
             redis_queue_depth_gauge.set(count or 0)
         except Exception:
             pass
-        await asyncio.sleep(5)
+        await asyncio.sleep(30)
 
 async def keep_alive():
     import httpx

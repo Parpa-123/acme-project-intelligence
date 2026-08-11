@@ -314,6 +314,7 @@ class WorkerSettings:
     ]
     job_timeout = 3600  # Allow long running tasks (1 hour)
     max_tries = 3
+    poll_delay = 5.0  # Reduce Redis polling to once every 5 seconds to save Upstash quota
     
     # We use redis as hostname since we run in docker-compose.
     redis_settings = RedisSettings.from_dsn(os.environ.get("REDIS_URL", "redis://localhost:6379/0"))
