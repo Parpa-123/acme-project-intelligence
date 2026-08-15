@@ -62,7 +62,7 @@ async def keep_alive():
         ping_url = os.environ.get("PUBLIC_API_URL", "http://127.0.0.1:8000/health")
         
     while True:
-        await asyncio.sleep(150)  # Ping every 2.5 minutes
+        await asyncio.sleep(600)  # Ping every 10 minutes
         try:
             async with httpx.AsyncClient() as client:
                 resp = await client.get(ping_url, timeout=10.0)
