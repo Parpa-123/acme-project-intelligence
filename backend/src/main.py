@@ -193,7 +193,11 @@ from src.models import User
 from src.schemas import UserResponse
 from sqlalchemy.orm import Session
 
+from fastapi_cache.decorator import cache
+from src.core.cache import user_specific_key_builder
+
 @app.get("/api/me", tags=["user"], response_model=UserResponse)
+@cache(expire=60, key_builder=user_specific_key_builder)
 async def get_current_user(
     session: SessionContainer = Depends(verify_session()),
     db: Session = Depends(get_db)

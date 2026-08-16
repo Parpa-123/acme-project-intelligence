@@ -71,15 +71,21 @@ def get_global_artifacts(db: Session, model: Any, page: int, size: int):
         "has_more": (page * size) < total
     }
 
+from fastapi_cache.decorator import cache
+from src.core.cache import user_specific_key_builder
+
 @router.get("/decisions", response_model=GlobalPaginatedResponse[GlobalDecisionResponse])
+@cache(expire=30, key_builder=user_specific_key_builder)
 def get_global_decisions(page: int = 1, size: int = 50, db: Session = Depends(get_db), session: SessionContainer = Depends(verify_session())):
     return get_global_artifacts(db, MeetingDecision, page, size)
 
 @router.get("/requirements", response_model=GlobalPaginatedResponse[GlobalRequirementResponse])
+@cache(expire=30, key_builder=user_specific_key_builder)
 def get_global_requirements(page: int = 1, size: int = 50, db: Session = Depends(get_db), session: SessionContainer = Depends(verify_session())):
     return get_global_artifacts(db, MeetingRequirement, page, size)
 
 @router.get("/action-items", response_model=GlobalPaginatedResponse[GlobalActionItemResponse])
+@cache(expire=30, key_builder=user_specific_key_builder)
 def get_global_action_items(page: int = 1, size: int = 50, db: Session = Depends(get_db), session: SessionContainer = Depends(verify_session())):
     return get_global_artifacts(db, MeetingActionItem, page, size)
 
@@ -166,7 +172,12 @@ async def stream_global_chat(
             session_id=request.session_id,
             is_global=True
         ),
-        media_type="text/event-stream"
+        media_type="text/event-stream",
+        headers={
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
     )
 
 @router.get("/chat/sessions", response_model=list[ChatSessionResponse])

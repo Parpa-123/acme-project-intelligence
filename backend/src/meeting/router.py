@@ -67,7 +67,11 @@ def create_meeting_space(
 
 from fastapi import Query
 
+from fastapi_cache.decorator import cache
+from src.core.cache import user_specific_key_builder
+
 @router.get("", response_model=List[MeetingSpaceListResponse])
+@cache(expire=15, key_builder=user_specific_key_builder)
 def list_meeting_spaces(
     project_id: int,
     status: str = Query("active", description="Filter by status: active, archived, all"),
@@ -87,6 +91,7 @@ def _get_join_url(room_name: str) -> str:
     return f"{frontend_url}/m/{room_name}"
 
 @space_router.get("/{space_id}", response_model=MeetingSpaceDetailResponse)
+@cache(expire=15, key_builder=user_specific_key_builder)
 def get_meeting_space(
     space_id: str,
     db: Session = Depends(get_db),

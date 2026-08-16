@@ -33,7 +33,12 @@ async def stream_ai_chat(
             user_id=user.id,
             session_id=request.session_id
         ),
-        media_type="text/event-stream"
+        media_type="text/event-stream",
+        headers={
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
     )
 
 @router.get("/sessions", response_model=list[ChatSessionResponse])

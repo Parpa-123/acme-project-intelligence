@@ -23,10 +23,14 @@ def get_service(db: Session = Depends(get_db)) -> ProjectService:
 
 
 
+from fastapi_cache.decorator import cache
+from src.core.cache import user_specific_key_builder
+
 # ----------------------------------------
 # Dashboards
 # ----------------------------------------
 @router.get("/dashboard", response_model=DashboardResponse)
+@cache(expire=30, key_builder=user_specific_key_builder)
 def get_dashboard(
     service: ProjectService = Depends(get_service),
     session: SessionContainer = Depends(verify_session())
@@ -34,6 +38,7 @@ def get_dashboard(
     return service.get_dashboard(session.get_user_id())
 
 @router.get("/{project_id}/dashboard", response_model=ProjectDashboardResponse)
+@cache(expire=30, key_builder=user_specific_key_builder)
 def get_project_dashboard(
     project_id: int,
     service: ProjectService = Depends(get_service),
@@ -66,6 +71,7 @@ def create_project(
 from src.core.schemas import PaginatedResponse
 
 @router.get("", response_model=PaginatedResponse[ProjectResponse])
+@cache(expire=15, key_builder=user_specific_key_builder)
 def list_projects(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
@@ -76,6 +82,7 @@ def list_projects(
     return service.list_projects(session.get_user_id(), page=page, size=size, status=status)
 
 @router.get("/{project_id}", response_model=ProjectResponse)
+@cache(expire=30, key_builder=user_specific_key_builder)
 def get_project(
     project_id: int,
     service: ProjectService = Depends(get_service),
