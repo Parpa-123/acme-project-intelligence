@@ -45,3 +45,21 @@ body {
   background: radial-gradient(circle at center, var(--color-canvas-center) 0%, var(--color-canvas-edge) 100%);
   @apply text-gray-100 min-h-screen antialiased selection:bg-indigo-500/30;
 }
+
+@layer base {
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"]:disabled,
+  input[type="button"]:disabled,
+  input[type="submit"]:disabled,
+  input[type="reset"]:disabled {
+    cursor: not-allowed;
+  }
+}
