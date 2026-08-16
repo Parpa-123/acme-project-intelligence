@@ -43,7 +43,11 @@ SuperTokens.init({
   ],
 });
 
+import { useBackendKeepAlive } from './hooks/useBackendKeepAlive';
+
 const App = () => {
+  useBackendKeepAlive();
+
   return (
     <ErrorBoundary>
       <SuperTokensWrapper>

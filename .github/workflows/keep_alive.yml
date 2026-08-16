@@ -1,0 +1,19 @@
+name: Backend 24/7 Keep-Alive
+
+on:
+  schedule:
+    # Run every 14 minutes to prevent Render 15-minute idle spin-down
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive-ping:
+    name: Ping Render Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Keep-Alive HTTP Request
+        run: |
+          BACKEND_URL="${{ secrets.RENDER_BACKEND_URL || 'https://acme-project-intelligence.onrender.com' }}"
+          echo "Sending keep-alive ping to ${BACKEND_URL}/health..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -m 30 "${BACKEND_URL}/health" || echo "failed")
+          echo "Response HTTP Status: ${STATUS}"

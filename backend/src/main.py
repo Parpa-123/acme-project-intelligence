@@ -48,28 +48,6 @@ async def poll_arq_queue_depth(redis_conn):
             pass
         await asyncio.sleep(30)
 
-async def keep_alive():
-    import httpx
-    import structlog
-    logger = structlog.get_logger("keep_alive")
-    # Use 127.0.0.1 instead of localhost to prevent IPv6 binding issues in Docker
-    api_domain = os.environ.get("API_DOMAIN")
-    if api_domain:
-        if not api_domain.startswith("http"):
-            api_domain = f"https://{api_domain}"
-        ping_url = f"{api_domain.rstrip('/')}/health"
-    else:
-        ping_url = os.environ.get("PUBLIC_API_URL", "http://127.0.0.1:8000/health")
-        
-    while True:
-        await asyncio.sleep(600)  # Ping every 10 minutes
-        try:
-            async with httpx.AsyncClient() as client:
-                resp = await client.get(ping_url, timeout=10.0)
-                logger.info(f"Keep-alive ping sent to {ping_url}", status_code=resp.status_code)
-        except Exception as e:
-            logger.error(f"Keep-alive ping failed: {str(e)}")
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Fallback to ensure project_id is nullable if Alembic migration fails/skips on remote
@@ -97,15 +75,11 @@ async def lifespan(app: FastAPI):
     # Startup: spawn queue depth poller
     poll_task = asyncio.create_task(poll_arq_queue_depth(redis_conn))
     
-    # Startup: spawn keep-alive task
-    keep_alive_task = asyncio.create_task(keep_alive())
-    
     yield
     
     # Shutdown: cancel the tasks and close redis
     task.cancel()
     poll_task.cancel()
-    keep_alive_task.cancel()
     await redis_conn.close()
     try:
         await task
@@ -157,10 +131,16 @@ from sqlalchemy import text
 import redis.asyncio as aioredis
 from fastapi import Response
 
+from datetime import datetime, timezone
+
 @app.get("/health", tags=["health"])
+@app.get("/api/health", tags=["health"])
 async def health_check() -> JSONResponse:
-    """Simple liveness probe — no auth required."""
-    return JSONResponse({"status": "ok"})
+    """Fast, unauthenticated liveness and keep-alive probe."""
+    return JSONResponse({
+        "status": "healthy",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
 
 from sqlalchemy.orm import Session
 from src.database import get_db
