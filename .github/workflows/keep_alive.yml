@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Send Keep-Alive HTTP Request
         run: |
-          BACKEND_URL="${{ secrets.RENDER_BACKEND_URL || 'https://acme-project-intelligence.onrender.com' }}"
+          BACKEND_URL="${{ secrets.RENDER_BACKEND_URL || 'https://luna-prod-8wsv.onrender.com' }}"
           echo "Sending keep-alive ping to ${BACKEND_URL}/health..."
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" -m 30 "${BACKEND_URL}/health" || echo "failed")
           echo "Response HTTP Status: ${STATUS}"
