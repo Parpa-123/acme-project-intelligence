@@ -2,8 +2,8 @@ name: Backend 24/7 Keep-Alive
 
 on:
   schedule:
-    # Run every 14 minutes to prevent Render 15-minute idle spin-down
-    - cron: '*/14 * * * *'
+    # Run every 4 minutes to prevent Render idle spin-down
+    - cron: '*/4 * * * *'
   workflow_dispatch:
 
 jobs:
