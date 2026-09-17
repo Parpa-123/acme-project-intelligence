@@ -4,21 +4,31 @@ from datetime import datetime
 from uuid import UUID
 
 class PinKnowledgeRequest(BaseModel):
-    text: str
+    message_id: Optional[str] = None
+    text: Optional[str] = None
+
+class UnpinKnowledgeRequest(BaseModel):
+    message_id: Optional[str] = None
+    chunk_id: Optional[str] = None
+    text: Optional[str] = None
 
 class KnowledgeChunkResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
-    meeting_id: UUID
-    chunk_index: int
-    start_timestamp: datetime
-    end_timestamp: datetime
+    meeting_id: Optional[UUID] = None
+    source_type: Optional[str] = "meeting"
+    chat_message_id: Optional[str] = None
+    source_metadata: Optional[Dict[str, Any]] = None
+    chunk_index: Optional[int] = 0
+    start_timestamp: Optional[datetime] = None
+    end_timestamp: Optional[datetime] = None
     text: str
-    participant_ids: List[int]
-    entry_count: int
+    participant_ids: Optional[List[int]] = None
+    entry_count: Optional[int] = 1
     created_at: datetime
     # Metadata mapped from DB if needed
     meeting_title: Optional[str] = None
+
 
 class MeetingSummaryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

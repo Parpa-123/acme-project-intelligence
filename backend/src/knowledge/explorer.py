@@ -61,7 +61,19 @@ class KnowledgeExplorer:
         return self._paginate(query, page, size)
 
     def get_chunks(self, project_id: int, meeting_id: Optional[str] = None, page: int = 1, size: int = 50):
-        return self.get_artifacts(project_id, KnowledgeChunk, meeting_id, page, size)
+        paginated = self.get_artifacts(project_id, KnowledgeChunk, meeting_id, page, size)
+        for chunk in paginated.get("items", []):
+            if chunk.meeting_id:
+                meeting = self.db.query(Meeting).filter(Meeting.id == chunk.meeting_id).first()
+                chunk.meeting_title = meeting.meeting_space.name if meeting and meeting.meeting_space else "Meeting Knowledge"
+            elif chunk.source_metadata and "session_title" in chunk.source_metadata:
+                chunk.meeting_title = f"AI Insight: {chunk.source_metadata['session_title']}"
+            elif getattr(chunk, 'source_type', None) == "chat":
+                chunk.meeting_title = "AI Chat Insight"
+            else:
+                chunk.meeting_title = "Project Knowledge"
+        return paginated
+
 
     def get_decisions(self, project_id: int, meeting_id: Optional[str] = None, page: int = 1, size: int = 50):
         return self.get_artifacts(project_id, MeetingDecision, meeting_id, page, size)
@@ -90,20 +102,30 @@ class KnowledgeExplorer:
             # We want to return the actual chunk data
             chunk = self.db.query(KnowledgeChunk).filter(KnowledgeChunk.id == c.chunk_id).first()
             if chunk:
-                # Get meeting title
-                meeting = self.db.query(Meeting).filter(Meeting.id == chunk.meeting_id).first()
-                title = meeting.meeting_space.name if meeting and meeting.meeting_space else "Unknown Meeting"
+                # Get meeting or source title
+                title = "AI Chat Insight"
+                if chunk.meeting_id:
+                    meeting = self.db.query(Meeting).filter(Meeting.id == chunk.meeting_id).first()
+                    title = meeting.meeting_space.name if meeting and meeting.meeting_space else "Meeting Knowledge"
+                elif chunk.source_metadata and "session_title" in chunk.source_metadata:
+                    title = f"AI Insight: {chunk.source_metadata['session_title']}"
+                elif chunk.source_type == "chat":
+                    title = "AI Chat Insight"
+                else:
+                    title = "Project Knowledge"
                 
-                # Convert chunk to dict matching schema
                 chunk_dict = {
                     "id": chunk.id,
                     "meeting_id": chunk.meeting_id,
-                    "chunk_index": chunk.chunk_index,
+                    "source_type": chunk.source_type,
+                    "chat_message_id": chunk.chat_message_id,
+                    "source_metadata": chunk.source_metadata,
+                    "chunk_index": chunk.chunk_index or 0,
                     "start_timestamp": chunk.start_timestamp,
                     "end_timestamp": chunk.end_timestamp,
                     "text": chunk.text,
-                    "participant_ids": chunk.participant_ids,
-                    "entry_count": chunk.entry_count,
+                    "participant_ids": chunk.participant_ids or [],
+                    "entry_count": chunk.entry_count or 1,
                     "created_at": chunk.created_at,
                     "meeting_title": title
                 }
@@ -115,56 +137,64 @@ class KnowledgeExplorer:
                 })
         return results
 
-    def pin_knowledge(self, project_id: int, text: str, user_id: int):
+    def pin_knowledge(
+        self, 
+        project_id: int, 
+        text: Optional[str] = None, 
+        user_id: int = 0, 
+        message_id: Optional[str] = None
+    ):
         from src.knowledge.embedding import EmbeddingService
+        from src.ai_chat.models import ChatMessage, ChatSession
         from datetime import datetime, timezone
-        
-        # 1. Ensure the "Manual Project Notebook" space exists
-        notebook_space = self.db.query(MeetingSpace).filter(
-            MeetingSpace.project_id == project_id,
-            MeetingSpace.name == "Project Knowledge Notebook"
-        ).first()
-        
-        if not notebook_space:
-            import uuid
-            notebook_space = MeetingSpace(
-                project_id=project_id,
-                created_by=user_id,
-                name="Project Knowledge Notebook",
-                description="Manual knowledge bits pinned from AI chat and other sources.",
-                livekit_room_name=f"notebook_{project_id}_{uuid.uuid4().hex[:8]}"
-            )
-            self.db.add(notebook_space)
-            self.db.flush()
-            
-        # 2. Ensure a meeting exists
-        notebook_meeting = self.db.query(Meeting).filter(
-            Meeting.meeting_space_id == notebook_space.id
-        ).first()
-        
-        if not notebook_meeting:
-            notebook_meeting = Meeting(
-                meeting_space_id=notebook_space.id,
-                created_by=user_id,
-                name="Pinned Knowledge",
-                status="completed"
-            )
-            self.db.add(notebook_meeting)
-            self.db.flush()
-            
-        # 3. Generate embedding
+
+        pin_text = text
+        source_metadata = {}
+        chat_msg = None
+
+        if message_id:
+            chat_msg = self.db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+            if chat_msg:
+                if not pin_text:
+                    pin_text = chat_msg.content
+                
+                # Fetch parent session for project & context
+                session = self.db.query(ChatSession).filter(ChatSession.id == chat_msg.session_id).first()
+                session_title = session.title if session else "Chat"
+                
+                # Fetch previous user prompt for provenance
+                prev_user_msg = self.db.query(ChatMessage).filter(
+                    ChatMessage.session_id == chat_msg.session_id,
+                    ChatMessage.role == "user",
+                    ChatMessage.created_at <= chat_msg.created_at
+                ).order_by(ChatMessage.created_at.desc()).first()
+
+                source_metadata = {
+                    "prompt": prev_user_msg.content if prev_user_msg else None,
+                    "session_id": chat_msg.session_id,
+                    "session_title": session_title,
+                    "citations": (chat_msg.metadata_json or {}).get("citations", []),
+                    "pinned_by_user_id": user_id
+                }
+
+        if not pin_text:
+            raise ValueError("No text provided to pin.")
+
+        # Generate embedding
         embed_service = EmbeddingService()
-        vector = embed_service.generate_embedding(text)
-        
-        # 4. Create KnowledgeChunk
+        vector = embed_service.generate_embedding(pin_text)
+
         now = datetime.now(timezone.utc)
         chunk = KnowledgeChunk(
             project_id=project_id,
-            meeting_id=notebook_meeting.id,
+            meeting_id=None,
+            source_type="chat" if message_id else "note",
+            chat_message_id=message_id if chat_msg else None,
+            source_metadata=source_metadata,
             chunk_index=0,
             start_timestamp=now,
             end_timestamp=now,
-            text=text,
+            text=pin_text,
             participant_ids=[],
             entry_count=1,
             embedding=vector
@@ -172,48 +202,101 @@ class KnowledgeExplorer:
         self.db.add(chunk)
         self.db.commit()
         self.db.refresh(chunk)
-        
-        chunk_dict = {
+
+        # Update chat message metadata with bidirectional pin link
+        if chat_msg:
+            meta = dict(chat_msg.metadata_json or {})
+            meta["is_pinned"] = True
+            meta["pinned_chunk_id"] = str(chunk.id)
+            chat_msg.metadata_json = meta
+            self.db.commit()
+
+        title = f"AI Insight: {source_metadata.get('session_title', 'Chat')}" if message_id else "Pinned Note"
+
+        return {
             "id": chunk.id,
             "meeting_id": chunk.meeting_id,
-            "chunk_index": chunk.chunk_index,
+            "source_type": chunk.source_type,
+            "chat_message_id": chunk.chat_message_id,
+            "source_metadata": chunk.source_metadata,
+            "chunk_index": chunk.chunk_index or 0,
             "start_timestamp": chunk.start_timestamp,
             "end_timestamp": chunk.end_timestamp,
             "text": chunk.text,
-            "participant_ids": chunk.participant_ids,
-            "entry_count": chunk.entry_count,
+            "participant_ids": chunk.participant_ids or [],
+            "entry_count": chunk.entry_count or 1,
             "created_at": chunk.created_at,
-            "meeting_title": notebook_meeting.name
+            "meeting_title": title
         }
-        return chunk_dict
 
-    def unpin_knowledge(self, project_id: int, text: str):
-        # Delete the chunk that exactly matches the text in the notebook meeting
-        notebook_space = self.db.query(MeetingSpace).filter(
-            MeetingSpace.project_id == project_id,
-            MeetingSpace.name == "Project Knowledge Notebook"
-        ).first()
-        
-        if not notebook_space:
-            return {"success": True}
-            
-        notebook_meeting = self.db.query(Meeting).filter(
-            Meeting.meeting_space_id == notebook_space.id
-        ).first()
-        
-        if not notebook_meeting:
-            return {"success": True}
-            
-        chunks_to_delete = self.db.query(KnowledgeChunk).filter(
-            KnowledgeChunk.meeting_id == notebook_meeting.id,
-            KnowledgeChunk.text == text
-        ).all()
-        
+    def unpin_knowledge(
+        self, 
+        project_id: int, 
+        message_id: Optional[str] = None, 
+        chunk_id: Optional[str] = None, 
+        text: Optional[str] = None
+    ):
+        from src.ai_chat.models import ChatMessage
+        import uuid
+
+        chunks_to_delete = []
+
+        # 1. Unpin by message_id (O(1) direct reference from Chat)
+        if message_id:
+            chunks_to_delete = self.db.query(KnowledgeChunk).filter(
+                KnowledgeChunk.project_id == project_id,
+                KnowledgeChunk.chat_message_id == message_id
+            ).all()
+
+            # Clear message metadata
+            chat_msg = self.db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+            if chat_msg:
+                meta = dict(chat_msg.metadata_json or {})
+                meta["is_pinned"] = False
+                meta.pop("pinned_chunk_id", None)
+                chat_msg.metadata_json = meta
+
+        # 2. Unpin by chunk_id (from Knowledge Explorer)
+        elif chunk_id:
+            try:
+                chunk_uuid = uuid.UUID(chunk_id)
+                chunk = self.db.query(KnowledgeChunk).filter(
+                    KnowledgeChunk.project_id == project_id,
+                    KnowledgeChunk.id == chunk_uuid
+                ).first()
+                if chunk:
+                    chunks_to_delete.append(chunk)
+                    if chunk.chat_message_id:
+                        chat_msg = self.db.query(ChatMessage).filter(ChatMessage.id == chunk.chat_message_id).first()
+                        if chat_msg:
+                            meta = dict(chat_msg.metadata_json or {})
+                            meta["is_pinned"] = False
+                            meta.pop("pinned_chunk_id", None)
+                            chat_msg.metadata_json = meta
+            except ValueError:
+                pass
+
+        # 3. Fallback: text-based lookup (backward compatibility for legacy chunks)
+        elif text:
+            chunks_to_delete = self.db.query(KnowledgeChunk).filter(
+                KnowledgeChunk.project_id == project_id,
+                KnowledgeChunk.text == text
+            ).all()
+            for chunk in chunks_to_delete:
+                if chunk.chat_message_id:
+                    chat_msg = self.db.query(ChatMessage).filter(ChatMessage.id == chunk.chat_message_id).first()
+                    if chat_msg:
+                        meta = dict(chat_msg.metadata_json or {})
+                        meta["is_pinned"] = False
+                        meta.pop("pinned_chunk_id", None)
+                        chat_msg.metadata_json = meta
+
         for chunk in chunks_to_delete:
             self.db.delete(chunk)
-            
+
         if chunks_to_delete:
             self.db.commit()
-            
-        return {"success": True}
+
+        return {"success": True, "deleted_count": len(chunks_to_delete)}
+
 

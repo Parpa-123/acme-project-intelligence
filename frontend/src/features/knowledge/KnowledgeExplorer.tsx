@@ -5,7 +5,8 @@ import { faBrain, faList, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { 
   useKnowledgeChunks, 
   useKnowledgeArtifacts, 
-  useKnowledgeSearch
+  useKnowledgeSearch,
+  useUnpinKnowledge
 } from '../../api/knowledgeApi';
 import type {
   Decision, 
@@ -17,11 +18,13 @@ import type {
 } from '../../api/knowledgeApi';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { useChatStore } from '../ai-chat/useChatStore';
-import { FaThumbtack } from 'react-icons/fa';
+import { FaThumbtack, FaTrash } from 'react-icons/fa';
+import { toast } from 'react-hot-toast';
 
 interface KnowledgeExplorerProps {
   projectId: number;
 }
+
 
 const BrainWrapper = (props: any) => <FontAwesomeIcon icon={faBrain} {...props} />;
 const ListWrapper = (props: any) => <FontAwesomeIcon icon={faList} {...props} />;
@@ -43,6 +46,7 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [executeSearch, setExecuteSearch] = useState(false);
   const { setDrawerOpen, setPendingDiscussionText } = useChatStore();
+  const unpinMutation = useUnpinKnowledge(projectId);
 
   const handleDiscuss = (text: string, e?: React.MouseEvent) => {
     if (e) {
@@ -51,6 +55,17 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
     setPendingDiscussionText(text);
     setDrawerOpen(true);
   };
+
+  const handleUnpinChunk = (chunkId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    unpinMutation.mutate({ chunkId }, {
+      onSuccess: () => toast.success('Unpinned from Knowledge Base'),
+      onError: () => toast.error('Failed to unpin knowledge chunk')
+    });
+  };
+
 
   // Queries
   const { data: chunksRes } = useKnowledgeChunks(projectId, undefined, 1);
@@ -163,19 +178,42 @@ export function KnowledgeExplorer({ projectId }: KnowledgeExplorerProps) {
               ) : (
                 chunksRes?.items.map(chunk => (
                   <div key={chunk.id} className="glass-panel p-4 rounded-xl border border-white/10 transition-all hover:bg-white/5 relative group">
-                    <p className="text-sm text-gray-300 pr-8">{chunk.text}</p>
-                    <button onClick={(e) => handleDiscuss(chunk.text, e)} className="absolute top-4 right-4 text-emerald-400/50 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100" title="Discuss with AI">
-                      <FaThumbtack />
-                    </button>
-                    <div className="mt-3 text-xs text-gray-500 flex justify-between">
-                      <span>Meeting: {chunk.meeting_title || 'Unknown'}</span>
-                      <span>{new Date(chunk.start_timestamp).toLocaleString()}</span>
+                    {chunk.source_type === 'chat' && (
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                          AI Chat Insight
+                        </span>
+                        {chunk.source_metadata?.prompt && (
+                          <span className="text-xs text-gray-400 truncate italic max-w-md">
+                            Prompt: "{chunk.source_metadata.prompt}"
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-sm text-gray-300 pr-16">{chunk.text}</p>
+                    <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={(e) => handleDiscuss(chunk.text, e)} className="text-emerald-400/70 hover:text-emerald-400 transition-colors p-1" title="Discuss with AI">
+                        <FaThumbtack />
+                      </button>
+                      <button 
+                        onClick={(e) => handleUnpinChunk(chunk.id, e)} 
+                        disabled={unpinMutation.isPending}
+                        className="text-red-400/70 hover:text-red-400 transition-colors p-1" 
+                        title="Unpin from Knowledge Base"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                    <div className="mt-3 text-xs text-gray-500 flex justify-between items-center">
+                      <span>Source: {chunk.meeting_title || 'Project Knowledge'}</span>
+                      <span>{chunk.created_at ? new Date(chunk.created_at).toLocaleString() : (chunk.start_timestamp ? new Date(chunk.start_timestamp).toLocaleString() : '')}</span>
                     </div>
                   </div>
                 ))
               )}
             </div>
           )}
+
 
           {/* DECISIONS VIEW */}
           {activeView === 'decisions' && (

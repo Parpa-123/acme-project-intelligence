@@ -5,19 +5,21 @@ import { Fragment } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStreamingChat } from './useStreamingChat';
 import { useChatStore } from './useChatStore';
-import type { ChatSession } from './useChatStore';
+import type { ChatSession, ChatMessage } from './useChatStore';
 import { FaPaperPlane, FaRobot, FaUser, FaCircleNotch, FaPlus, FaComment, FaTimes, FaExpandAlt, FaCompressAlt, FaCopy, FaCheck, FaThumbtack, FaTrash } from 'react-icons/fa';
 import { usePinKnowledge, useUnpinKnowledge } from '../../api/knowledgeApi';
 import { toast } from 'react-hot-toast';
 
-const MessageActions = ({ text, projectId, role }: { text: string, projectId?: number, role: string }) => {
+const MessageActions = ({ message, projectId, role }: { message: ChatMessage, projectId?: number, role: string }) => {
   const [copied, setCopied] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
   const pinMutation = usePinKnowledge(projectId ?? 0);
   const unpinMutation = useUnpinKnowledge(projectId ?? 0);
+  
+  // Directly derive state from the persisted message metadata
+  const isPinned = message.metadata_json?.is_pinned === true;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(message.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -25,12 +27,14 @@ const MessageActions = ({ text, projectId, role }: { text: string, projectId?: n
   const handlePinToggle = () => {
     if (projectId === undefined) return;
     if (isPinned) {
-      unpinMutation.mutate(text, {
-        onSuccess: () => setIsPinned(false)
+      unpinMutation.mutate({ messageId: message.id }, {
+        onSuccess: () => toast.success('Unpinned from Knowledge Base'),
+        onError: () => toast.error('Failed to unpin')
       });
     } else {
-      pinMutation.mutate(text, {
-        onSuccess: () => setIsPinned(true)
+      pinMutation.mutate({ messageId: message.id, text: message.content }, {
+        onSuccess: () => toast.success('Pinned to Knowledge Base'),
+        onError: () => toast.error('Failed to pin')
       });
     }
   };
@@ -53,6 +57,7 @@ const MessageActions = ({ text, projectId, role }: { text: string, projectId?: n
     </div>
   );
 };
+
 
 
 interface ChatDrawerProps {
@@ -301,7 +306,8 @@ export function ChatDrawer({ projectId, isOpen, onClose }: ChatDrawerProps) {
                               <ReactMarkdown>{msg.content}</ReactMarkdown>
                             </div>
                           </div>
-                          <MessageActions text={msg.content} projectId={projectId} role={msg.role} />
+                          <MessageActions message={msg} projectId={projectId} role={msg.role} />
+
                           {msg.status && (
                             <div className="mt-2 text-xs text-emerald-400/70 flex items-center gap-2">
                               <FaCircleNotch className="animate-spin" />

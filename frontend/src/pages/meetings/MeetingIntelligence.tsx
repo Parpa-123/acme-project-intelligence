@@ -80,8 +80,9 @@ export function MeetingIntelligence() {
                 className="p-4 rounded-xl glass-panel shadow-[0_0_15px_rgba(0,0,0,0.2)] border border-white/10 hover:border-indigo-500/30 transition-colors duration-500 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
-                  <span className="font-bold text-indigo-400">{chunk.participant_ids.length} Participants</span>
-                  <span>{new Date(chunk.start_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="font-bold text-indigo-400">{chunk.participant_ids?.length ?? 0} Participants</span>
+                  <span>{chunk.start_timestamp ? new Date(chunk.start_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+
                 </div>
                 <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
                   {chunk.text}

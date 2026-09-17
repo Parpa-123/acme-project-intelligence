@@ -6,7 +6,14 @@ export type ChatMessage = {
   content: string;
   status?: string;
   created_at?: string;
+  metadata_json?: {
+    is_pinned?: boolean;
+    pinned_chunk_id?: string;
+    citations?: any[];
+    [key: string]: any;
+  };
 };
+
 
 export type ChatSession = {
   id: string;

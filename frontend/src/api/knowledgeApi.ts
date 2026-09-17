@@ -3,16 +3,27 @@ import { fetcher } from './client';
 
 export interface KnowledgeChunk {
   id: string;
-  meeting_id: string;
-  chunk_index: number;
-  start_timestamp: string;
-  end_timestamp: string;
+  meeting_id?: string | null;
+  source_type?: string;
+  chat_message_id?: string | null;
+  source_metadata?: {
+    prompt?: string;
+    session_id?: string;
+    session_title?: string;
+    citations?: any[];
+    pinned_by_user_id?: number;
+    [key: string]: any;
+  } | null;
+  chunk_index?: number;
+  start_timestamp?: string;
+  end_timestamp?: string;
   text: string;
-  participant_ids: number[];
-  entry_count: number;
+  participant_ids?: number[];
+  entry_count?: number;
   created_at: string;
   meeting_title?: string;
 }
+
 
 export interface ArtifactBase {
   id: string;
@@ -107,13 +118,18 @@ export const useKnowledgeArtifacts = <T>(projectId: number, type: string, meetin
 export const usePinKnowledge = (projectId: number) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (text: string) => 
-      fetcher<KnowledgeChunk>(`/projects/${projectId}/knowledge/pin`, {
+    mutationFn: (param: string | { messageId?: string; text?: string }) => {
+      const body = typeof param === 'string' 
+        ? { text: param } 
+        : { message_id: param.messageId, text: param.text };
+      return fetcher<KnowledgeChunk>(`/projects/${projectId}/knowledge/pin`, {
         method: 'POST',
-        body: JSON.stringify({ text }),
-      }),
+        body: JSON.stringify(body),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['chatMessages', projectId] });
     },
   });
 };
@@ -121,13 +137,19 @@ export const usePinKnowledge = (projectId: number) => {
 export const useUnpinKnowledge = (projectId: number) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (text: string) => 
-      fetcher<{success: boolean}>(`/projects/${projectId}/knowledge/unpin`, {
+    mutationFn: (param: string | { messageId?: string; chunkId?: string; text?: string }) => {
+      const body = typeof param === 'string' 
+        ? { text: param } 
+        : { message_id: param.messageId, chunk_id: param.chunkId, text: param.text };
+      return fetcher<{ success: boolean; deleted_count?: number }>(`/projects/${projectId}/knowledge/unpin`, {
         method: 'POST',
-        body: JSON.stringify({ text }),
-      }),
+        body: JSON.stringify(body),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['chatMessages', projectId] });
     },
   });
 };
+

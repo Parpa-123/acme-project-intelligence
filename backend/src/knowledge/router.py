@@ -10,6 +10,7 @@ from supertokens_python.recipe.session import SessionContainer
 from src.projects.service import ProjectService
 from .schemas import (
     KnowledgeChunkResponse, PaginatedResponse, SearchResultResponse, PinKnowledgeRequest,
+    UnpinKnowledgeRequest,
     DecisionResponse, ActionItemResponse, RequirementResponse, ConcernResponse, TopicResponse, MeetingSummaryResponse
 )
 from .explorer import KnowledgeExplorer
@@ -31,18 +32,29 @@ def pin_knowledge(
 ):
     user = verify_project_access(project_id, db, session)
     explorer = KnowledgeExplorer(db)
-    return explorer.pin_knowledge(project_id, request.text, user.id)
+    return explorer.pin_knowledge(
+        project_id=project_id,
+        user_id=user.id,
+        message_id=request.message_id,
+        text=request.text
+    )
 
 @router.post("/unpin")
 def unpin_knowledge(
     project_id: int,
-    request: PinKnowledgeRequest,
+    request: UnpinKnowledgeRequest,
     db: Session = Depends(get_db),
     session: SessionContainer = Depends(verify_session())
 ):
     verify_project_access(project_id, db, session)
     explorer = KnowledgeExplorer(db)
-    return explorer.unpin_knowledge(project_id, request.text)
+    return explorer.unpin_knowledge(
+        project_id=project_id,
+        message_id=request.message_id,
+        chunk_id=request.chunk_id,
+        text=request.text
+    )
+
 
 @router.get("/search", response_model=List[SearchResultResponse])
 def search_knowledge(

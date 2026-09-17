@@ -27,11 +27,18 @@ class ContextAssembler:
         seen_ids = set()
         
         for db_chunk in db_chunks:
+            if not db_chunk.meeting_id:
+                if db_chunk.id not in seen_ids:
+                    seen_ids.add(db_chunk.id)
+                    expanded_chunks.append(db_chunk)
+                continue
+
             # We want seq-1, seq, seq+1 from the same meeting
+            chunk_idx = db_chunk.chunk_index or 0
             neighbors = self.db.query(DBKnowledgeChunk).filter(
                 DBKnowledgeChunk.meeting_id == db_chunk.meeting_id,
-                DBKnowledgeChunk.chunk_index >= db_chunk.chunk_index - 1,
-                DBKnowledgeChunk.chunk_index <= db_chunk.chunk_index + 1
+                DBKnowledgeChunk.chunk_index >= chunk_idx - 1,
+                DBKnowledgeChunk.chunk_index <= chunk_idx + 1
             ).all()
             
             for n in neighbors:
@@ -45,8 +52,9 @@ class ContextAssembler:
         """
         Sorts chunks chronologically and removes exact duplicates.
         """
-        # Sort by meeting_id, then chunk_index
-        chunks.sort(key=lambda c: (str(c.meeting_id), c.chunk_index))
+        # Sort by meeting_id, then chunk_index (handling None safely)
+        chunks.sort(key=lambda c: (str(c.meeting_id or ''), c.chunk_index or 0))
+
         
         # Remove exact duplicates based on chunk ID
         # (Though seen_ids in expand_neighbors already helps, we do this for safety)

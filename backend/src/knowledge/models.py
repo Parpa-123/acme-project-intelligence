@@ -21,15 +21,21 @@ class KnowledgeChunk(Base):
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     meeting_id = Column(UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="SET NULL"), nullable=True)
     
-    chunk_index = Column(Integer, nullable=False)
+    # Source provenance: 'meeting', 'chat', or 'document'
+    source_type = Column(String(32), default="meeting", nullable=False, index=True)
+    chat_message_id = Column(String, ForeignKey("chat_messages.id", ondelete="SET NULL"), nullable=True, index=True)
+    source_metadata = Column(JSON, nullable=True, default={})
     
-    start_timestamp = Column(DateTime(timezone=True), nullable=False)
-    end_timestamp = Column(DateTime(timezone=True), nullable=False)
+    chunk_index = Column(Integer, nullable=True, default=0)
+    
+    start_timestamp = Column(DateTime(timezone=True), nullable=True)
+    end_timestamp = Column(DateTime(timezone=True), nullable=True)
     
     text = Column(String, nullable=False)
-    participant_ids = Column(JSON, nullable=False) 
-    entry_count = Column(Integer, nullable=False)
+    participant_ids = Column(JSON, nullable=True, default=list) 
+    entry_count = Column(Integer, nullable=True, default=1)
     
     embedding = Column(Vector(384), nullable=True) 
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
